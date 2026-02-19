@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: syslog-ng-config
+  namespace: infra
+data:
+  syslog-ng.conf: |
+    @version: 3.38
+    @include "scl.conf"
+
+    options {
+      keep-hostname(yes);
+      flush-lines(1);
+      time-reopen(10);
+      use-dns(no);
+      use-fqdn(no);
+    };
+
+    #
+    # Source: OPNsense
+    #
+    source s_opnsense {
+      syslog(
+        transport("udp")
+        ip("0.0.0.0")
+        port(1514)
+      );
+    };
+
+    #
+    # Local file (optional but useful)
+    #
+    destination d_local {
+      file(
+        "/var/log/opnsense/opnsense.log"
+        create-dirs(yes)
+        perm(0644)
+      );
+    };
+
+    #
+    # Forward to Promtail (RFC5424!)
+    #
+    destination d_promtail {
+      syslog(
+        "promtail.infra.svc.cluster.local"
+        transport("udp")
+        port(1514)
+        flags(syslog-protocol)
+      );
+    };
+
+    #
+    # Log path
+    #
+    log {
+      source(s_opnsense);
+      destination(d_local);
+      destination(d_promtail);
+    };

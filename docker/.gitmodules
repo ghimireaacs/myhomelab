@@ -1,0 +1,6 @@
+[submodule "ghostmedia/IPTV/EasyProxy"]
+	path = ghostmedia/IPTV/EasyProxy
+	url = https://github.com/nzo66/EasyProxy.git
+[submodule "ghostmedia/IPTV/StepDaddyLiveHD"]
+	path = ghostmedia/IPTV/StepDaddyLiveHD
+	url = https://github.com/gookie-dev/StepDaddyLiveHD.git

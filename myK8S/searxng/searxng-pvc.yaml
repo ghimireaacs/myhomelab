@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: searxng-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: ${NFS_SERVER_IP}
+    path: ${NFS_SEARXNG_PATH}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: searxng-pvc
+  namespace: personal
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: searxng-pv
+  resources:
+    requests:
+      storage: 5Gi

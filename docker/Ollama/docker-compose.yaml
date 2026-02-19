@@ -1,0 +1,14 @@
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:ollama
+    container_name: open-webui
+    ports:
+      - "3000:8080"
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    volumes:
+      - ${OLLAMA_DATA_PATH}:/root/.ollama
+      - ${OPENWEBUI_DATA_PATH}:/app/backend/data
+    restart: always
+    gpus: all

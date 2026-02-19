@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meilisearch
+  namespace: personal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: meilisearch
+  template:
+    metadata:
+      labels:
+        app: meilisearch
+    spec:
+      containers:
+      - name: meilisearch
+        image: getmeili/meilisearch:v1.11.1
+        env:
+        - name: MEILI_NO_ANALYTICS
+          value: "true"
+        volumeMounts:
+        - mountPath: /meili_data
+          name: meili-storage
+      volumes:
+      - name: meili-storage
+        persistentVolumeClaim:
+          claimName: karakeep-meili-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meilisearch
+  namespace: personal
+spec:
+  type: ClusterIP
+  selector:
+    app: meilisearch
+  ports:
+  - port: 7700

@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: glance
+  namespace: personal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: glance
+  template:
+    metadata:
+      labels:
+        app: glance
+    spec:
+      containers:
+        - name: glance
+          image: glanceapp/glance:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MY_SECRET_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: glance-env
+                  key: MY_SECRET_TOKEN
+          volumeMounts:
+            - name: glance-storage
+              mountPath: /app/config
+              subPath: config
+            - name: glance-storage
+              mountPath: /app/assets
+              subPath: assets
+            - name: glance-storage
+              mountPath: /app/data
+              subPath: data
+            - name: localtime
+              mountPath: /etc/localtime
+              readOnly: true
+      volumes:
+        - name: glance-storage
+          persistentVolumeClaim:
+            claimName: glance-unified-pvc
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+            type: File

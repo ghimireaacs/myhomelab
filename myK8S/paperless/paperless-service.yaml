@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: paperless
+  namespace: personal
+spec:
+  selector:
+    app: paperless
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paperless-postgres
+  namespace: personal
+spec:
+  selector:
+    app: paperless-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paperless-redis
+  namespace: personal
+spec:
+  selector:
+    app: paperless-redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paperless-gotenberg
+  namespace: personal
+spec:
+  selector:
+    app: paperless-gotenberg
+  ports:
+    - port: 3000
+      targetPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paperless-tika
+  namespace: personal
+spec:
+  selector:
+    app: paperless-tika
+  ports:
+    - port: 9998
+      targetPort: 9998

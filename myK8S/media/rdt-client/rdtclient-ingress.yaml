@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rdtclient-ingress
+  namespace: media
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod-cf
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - rdt.${BASE_DOMAIN}
+      secretName: rdtclient-tls-secret
+  rules:
+    - host: rdt.${BASE_DOMAIN}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rdtclient-svc
+                port:
+                  number: 80

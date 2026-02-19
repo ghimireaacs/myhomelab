@@ -1,0 +1,29 @@
+# 1. The Physical Connection (TrueNAS Path)
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: wallos-pv
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: ${NFS_SERVER_IP}
+    path: ${NFS_WALLOS_PATH}
+---
+# 2. The Logical Claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wallos-pvc
+  namespace: personal
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: "" # Disable dynamic provisioning
+  volumeName: wallos-pv # Bind to the specific PV above
+  resources:
+    requests:
+      storage: 2Gi

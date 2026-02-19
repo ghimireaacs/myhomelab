@@ -1,0 +1,60 @@
+# 1. Service: Internal name for the external app
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-whoami-svc
+  namespace: personal
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80           # Traefik talks to this port
+      targetPort: 8080   # The VM is listening on this port
+---
+# 2. EndpointSlice: Points to the VM's LAN IP
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: external-whoami-slice
+  namespace: personal
+  labels:
+    kubernetes.io/service-name: external-whoami-svc
+addressType: IPv4
+ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+endpoints:
+  - addresses:
+      - "${TEST_SERVICE_IP}"
+    conditions:
+      ready: true
+---
+# 3. Ingress: The Public Route
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: external-whoami-ingress
+  namespace: personal
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod-cf"
+    # NO SSL ANNOTATIONS NEEDED (Simple HTTP)
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - "whoami.${BASE_DOMAIN}"
+      secretName: external-whoami-tls
+  rules:
+    - host: "whoami.${BASE_DOMAIN}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: external-whoami-svc
+                port:
+                  number: 80

@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rdtclient
+  namespace: media
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rdtclient
+  template:
+    metadata:
+      labels:
+        app: rdtclient
+    spec:
+      containers:
+        - name: rdtclient
+          image: rogerfar/rdtclient
+          ports:
+            - containerPort: 6500
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: rdtclient-config-pvc
+        - name: data
+          persistentVolumeClaim:
+            claimName: media-downloads-pvc

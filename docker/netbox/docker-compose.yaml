@@ -1,0 +1,78 @@
+# Can be enhanced with an additional compose file
+# See also https://docs.docker.com/compose/production/#modify-your-compose-file-for-production
+
+services:
+  netbox: &netbox
+    image: docker.io/netboxcommunity/netbox:${VERSION-v4.5-4.0.0}
+    depends_on:
+      - postgres
+      - redis
+      - redis-cache
+    env_file: env/netbox.env
+    user: "netbox:root"
+    healthcheck:
+      test: curl -f http://localhost:8080/login/ || exit 1
+      start_period: 90s
+      timeout: 3s
+      interval: 15s
+    volumes:
+      - ${NETBOX_DATA_ROOT}/configuration:/etc/netbox/config:ro
+      - ${NETBOX_DATA_ROOT}/media:/opt/netbox/netbox/media:rw
+      - ${NETBOX_DATA_ROOT}/reports:/opt/netbox/netbox/reports:rw
+      - ${NETBOX_DATA_ROOT}/scripts:/opt/netbox/netbox/scripts:rw
+
+  netbox-worker:
+    <<: *netbox
+    depends_on:
+      netbox:
+        condition: service_healthy
+    command:
+      - /opt/netbox/venv/bin/python
+      - /opt/netbox/netbox/manage.py
+      - rqworker
+    healthcheck:
+      test: ps -aux | grep -v grep | grep -q rqworker || exit 1
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+
+  # postgres
+  postgres:
+    image: docker.io/postgres:18-alpine
+    healthcheck:
+      test: pg_isready -q -t 2 -d $$POSTGRES_DB -U $$POSTGRES_USER
+      start_period: 20s
+      timeout: 30s
+      interval: 10s
+      retries: 5
+    env_file: env/postgres.env
+    volumes:
+      - ${NETBOX_DATA_ROOT}/postgres:/var/lib/postgresql
+
+  # redis
+  redis:
+    image: docker.io/valkey/valkey:9.0-alpine
+    command:
+      - sh
+      - -c
+      - valkey-server --appendonly yes --requirepass $$REDIS_PASSWORD
+    healthcheck: &redis-healthcheck
+      test: '[ $$(valkey-cli --pass "$${REDIS_PASSWORD}" ping) = ''PONG'' ]'
+      start_period: 5s
+      timeout: 3s
+      interval: 1s
+      retries: 5
+    env_file: env/redis.env
+    volumes:
+      - ${NETBOX_DATA_ROOT}/redis:/data
+
+  redis-cache:
+    image: docker.io/valkey/valkey:9.0-alpine
+    command:
+      - sh
+      - -c
+      - valkey-server --requirepass $$REDIS_PASSWORD
+    healthcheck: *redis-healthcheck
+    env_file: env/redis-cache.env
+    volumes:
+      - ${NETBOX_DATA_ROOT}/redis-cache:/data

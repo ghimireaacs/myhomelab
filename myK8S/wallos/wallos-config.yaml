@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wallos-config
+  namespace: personal
+data:
+  TZ: "Australia/Sydney"

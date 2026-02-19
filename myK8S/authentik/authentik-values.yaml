@@ -1,0 +1,27 @@
+authentik:
+
+
+  error_reporting:
+    enabled: false
+
+
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - auth.${BASE_DOMAIN}
+    tls:
+      - hosts:
+          - auth.${BASE_DOMAIN}
+        secretName: auth-tls-secret
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+      traefik.ingress.kubernetes.io/router.tls: "true"
+      cert-manager.io/cluster-issuer: letsencrypt-prod-cf
+
+postgresql:
+  enabled: true
+  auth:
+

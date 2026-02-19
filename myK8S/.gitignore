@@ -1,0 +1,45 @@
+
+## SECRETS AND ENVs
+*.env
+.env
+*-secrets.yaml
+*-secret.yaml
+*-secrets.yml
+*-secret.yml
+secret.yaml
+secret.yml
+secrets.yaml
+secrets.yml
+
+## Temporary Files
+
+*.tmp
+*.bak
+*.swp
+
+## HELOMS
+charts/
+*.tgz
+helm-release.yaml
+
+## KUBE
+.kube/
+kubectl.kubeconfig
+*.kubeconfig
+
+
+## LOCAL
+values.local.yaml
+overrides.local.yaml
+	
+## Terraform
+
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# IDE
+.vscode/
+.DS_Store
+
+

@@ -1,0 +1,51 @@
+
+services:
+  # -------------------------------------------------------
+  # Service 0: Gluetun (The VPN)
+  # -------------------------------------------------------
+  vpn:
+    image: qmcgaw/gluetun
+    container_name: iptv_vpn
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - "7860:7860" # EasyProxy Port
+      - "3000:3000" # StepDaddy Frontend Port
+    environment:
+      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER}
+      - VPN_TYPE=${VPN_TYPE}
+      - OPENVPN_USER=${VPN_USER}
+      - OPENVPN_PASSWORD=${VPN_PASSWORD}
+      - SERVER_COUNTRIES=${SERVER_COUNTRIES}
+    restart: always
+
+  # -------------------------------------------------------
+  # Service 1: EasyProxy
+  # -------------------------------------------------------
+  easyproxy:
+    container_name: easyproxy
+    build:
+      context: ./EasyProxy
+      dockerfile: Dockerfile
+    network_mode: service:vpn
+    environment:
+      - PORT=7860
+    restart: unless-stopped
+
+  # -------------------------------------------------------
+  # Service 2: StepDaddyLiveHD
+  # -------------------------------------------------------
+  stepdaddy:
+    container_name: stepdaddy
+    build:
+      context: ./StepDaddyLiveHD
+      dockerfile: Dockerfile
+    network_mode: service:vpn
+    environment:
+      - PORT=3000
+      - API_URL=http://${SERVER_IP}:3000
+      - PROXY_CONTENT=FALSE
+      - CORS_ALLOWED_ORIGINS=["http://${SERVER_IP}:3000"]
+    restart: unless-stopped
