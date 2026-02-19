@@ -1,0 +1,153 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: paperless-postgres
+  namespace: personal
+spec:
+  serviceName: paperless-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paperless-postgres
+  template:
+    metadata:
+      labels:
+        app: paperless-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          envFrom:
+            - secretRef:
+                name: paperless-secrets
+          volumeMounts:
+            - name: system
+              mountPath: /var/lib/postgresql/data
+              subPath: 98_System/postgres
+      volumes:
+        - name: system
+          persistentVolumeClaim:
+            claimName: paperless-system-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paperless-redis
+  namespace: personal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paperless-redis
+  template:
+    metadata:
+      labels:
+        app: paperless-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7
+          volumeMounts:
+            - name: system
+              mountPath: /data
+              subPath: 98_System/redis
+      volumes:
+        - name: system
+          persistentVolumeClaim:
+            claimName: paperless-system-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paperless-gotenberg
+  namespace: personal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paperless-gotenberg
+  template:
+    metadata:
+      labels:
+        app: paperless-gotenberg
+    spec:
+      containers:
+        - name: gotenberg
+          image: gotenberg/gotenberg:8
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paperless-tika
+  namespace: personal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paperless-tika
+  template:
+    metadata:
+      labels:
+        app: paperless-tika
+    spec:
+      containers:
+        - name: tika
+          image: apache/tika:latest
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paperless
+  namespace: personal
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paperless
+  template:
+    metadata:
+      labels:
+        app: paperless
+
+    spec:
+      securityContext:
+        fsGroup: 3000
+      containers:
+        - name: paperless
+          image: ghcr.io/paperless-ngx/paperless-ngx:latest
+          securityContext:
+            runAsUser: 3000
+            runAsGroup: 3000
+          envFrom:
+            - secretRef:
+                name: paperless-secrets
+            - configMapRef:
+                name: paperless-config
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+
+          volumeMounts:
+            - name: documents
+              mountPath: /usr/src/paperless/media
+              subPath: .paperless/media
+            - name: documents
+              mountPath: /usr/src/paperless/export
+              subPath: Shared/Inbox/Exports
+            - name: documents
+              mountPath: /usr/src/paperless/consume
+              subPath: Shared/Inbox/To-Scan
+            - name: system
+              mountPath: /usr/src/paperless/data
+              subPath: 99_Service/data
+
+      volumes:
+        - name: documents
+          persistentVolumeClaim:
+            claimName: paperless-documents-pvc
+        - name: system
+          persistentVolumeClaim:
+            claimName: paperless-system-pvc

@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: glance-tls-secret
+  namespace: personal
+spec:
+  secretName: glance-tls-secret
+  dnsNames:
+    - ${BASE_DOMAIN}
+  issuerRef:
+    name: letsencrypt-prod-cf
+    kind: ClusterIssuer
+  usages:
+    - digital signature
+    - key encipherment

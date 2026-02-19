@@ -1,0 +1,59 @@
+# 1. Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: radicale-service
+  namespace: external-infra
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80          # Traefik talks to 80
+      targetPort: 5232
+---
+# 2. EndpointSlice (The Bridge)
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: radicale-slice
+  namespace: external-infra
+  labels:
+    kubernetes.io/service-name: radicale-service
+addressType: IPv4
+ports:
+  - name: http
+    port: 5232
+    protocol: TCP
+endpoints:
+  - addresses:
+      - "${RADICALE_IP}"
+    conditions:
+      ready: true
+---
+# 3. Ingress (The Route)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: radicale-ingress
+  namespace: external-infra
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod-cf"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - "radicale.${BASE_DOMAIN}"
+      secretName: radicale-tls-secret
+  rules:
+    - host: "radicale.${BASE_DOMAIN}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: radicale-service
+                port:
+                  number: 80

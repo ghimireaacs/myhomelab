@@ -1,0 +1,58 @@
+# 1. Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-service
+  namespace: external-infra
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80          # Traefik talks to 80
+---
+# 2. EndpointSlice (The Bridge)
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: ollama-slice
+  namespace: external-infra
+  labels:
+    kubernetes.io/service-name: ollama-service
+addressType: IPv4
+ports:
+  - name: http
+    port: 3000
+    protocol: TCP
+endpoints:
+  - addresses:
+      - "${OLLAMA_IP}"
+    conditions:
+      ready: true
+---
+# 3. Ingress (The Route)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ollama-ingress
+  namespace: external-infra
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod-cf"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - "ollama.${BASE_DOMAIN}"
+      secretName: ollama-tls-secret
+  rules:
+    - host: "ollama.${BASE_DOMAIN}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ollama-service
+                port:
+                  number: 80

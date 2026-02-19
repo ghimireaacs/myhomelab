@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sonarr-ingress
+  namespace: media
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod-cf
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - sonarr.${BASE_DOMAIN}
+      secretName: sonarr-tls-secret
+  rules:
+    - host: sonarr.${BASE_DOMAIN}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sonarr-svc
+                port:
+                  number: 80

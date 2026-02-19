@@ -1,0 +1,26 @@
+CLAUDE.md
+CLAUDE.local.md
+
+# Docker secrets
+**/.env
+
+# Kubernetes secrets
+**/*-secrets.yaml
+myK8S/.env
+
+# Terraform secrets and state
+terraform/*.tfvars
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfplan
+terraform/.terraform.lock.hcl
+terraform/ssh/*.pem
+terraform/ssh/bootstrap
+terraform/ssh/id_*
+
+# Docs live in a separate repository
+docs/
+
+# Claude Code local settings
+.claude/

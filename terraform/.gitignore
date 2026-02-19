@@ -1,0 +1,27 @@
+# Terraform state
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Terraform working directory
+**/.terraform/
+.terraform.lock.hcl
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Plan files
+*.tfplan
+
+# Secrets and real values — use *.tfvars.example for templates
+*.tfvars
+!*.tfvars.example
+
+# SSH keys — keep .pub examples, never private keys
+ssh/*.pem
+ssh/bootstrap
+ssh/id_*
+
+# Provider logs
+terraform-plugin-proxmox.log

@@ -1,0 +1,56 @@
+# Ollama Model API Gateway
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-api
+  namespace: external-infra
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: ollama-api-slice
+  namespace: external-infra
+  labels:
+    kubernetes.io/service-name: ollama-api
+addressType: IPv4
+ports:
+  - name: http
+    port: 11434
+    protocol: TCP
+endpoints:
+  - addresses:
+      - "${OLLAMA_IP}"
+    conditions:
+      ready: true
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ollama-api-ingress
+  namespace: external-infra
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod-cf"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - "ai.${BASE_DOMAIN}"
+      secretName: ollama-api-tls-secret
+  rules:
+    - host: "ai.${BASE_DOMAIN}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ollama-api
+                port:
+                  number: 80

@@ -1,0 +1,36 @@
+services:
+  paperless-ai:
+    image: clusterzx/paperless-ai:latest
+    container_name: paperless-ai
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${PAPERLESS_AI_PORT}:3000"
+    volumes:
+      - "${PAPERLESS_AI_DATA}:/app/data"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  paperless-gpt:
+    image: icereed/paperless-gpt:latest
+    container_name: paperless-gpt
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${PAPERLESS_GPT_PORT}:8080"
+    volumes:
+      - "${PAPERLESS_GPT_PROMPTS}:/app/prompts"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

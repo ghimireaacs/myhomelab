@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: searxng
+  namespace: personal
+  labels:
+    app: searxng
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: searxng
+  template:
+    metadata:
+      labels:
+        app: searxng
+    spec:
+      containers:
+        - name: searxng
+          image: docker.io/searxng/searxng:latest
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 8080
+              name: http
+
+          env:
+            - name: SEARXNG_BASE_URL
+              value: "https://search.${BASE_DOMAIN}/"
+
+
+          volumeMounts:
+            # Config
+            - name: searxng-config
+              mountPath: /etc/searxng
+
+            # Cache + runtime data
+            - name: searxng-data
+              mountPath: /var/cache/searxng
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 20
+
+      volumes:
+        - name: searxng-config
+          configMap:
+            name: searxng-config
+
+        - name: searxng-data
+          persistentVolumeClaim:
+            claimName: searxng-pvc

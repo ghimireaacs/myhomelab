@@ -1,0 +1,32 @@
+# VM definitions — map of name → static IP
+# Copy to homelab.tfvars and fill in your real IPs — never commit homelab.tfvars
+
+vms = {
+  "prod-vm-01" = "10.0.0.X"
+  "prod-vm-02" = "10.0.0.X"
+}
+
+# Target Proxmox node
+target_node = "homeserver"
+
+# VMID assignment starts here and increments per VM (sorted by name)
+vmid_start = 300
+
+# Template to clone
+clone_template = "tf-debian-template"
+
+# Proxmox storage pool
+storage = "local-lvm"
+
+# Hardware
+memory    = 4096   # MB
+cores     = 2
+disk_size = "32G"
+
+# Network
+bridge  = "vmbr0"
+gateway = "10.0.0.1"
+cidr    = 24
+
+# Cloud-init user
+ciuser = "ghost"

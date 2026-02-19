@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kavita-ingress
+  namespace: media
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod-cf
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts: [kavita.${BASE_DOMAIN}]
+      secretName: kavita-tls-secret
+  rules:
+    - host: kavita.${BASE_DOMAIN}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kavita-svc
+                port:
+                  number: 80

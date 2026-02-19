@@ -1,0 +1,49 @@
+ports:
+  web:
+    expose:
+      default: true
+    port: 80          # Port Traefik listens to inside the cluster
+    exposedPort: 80   # External port exposed (NodePort or LoadBalancer)
+    protocol: TCP
+    redirections:
+      entryPoint:
+        to: websecure
+        scheme: https
+        permanent: true
+
+  websecure:
+    expose:
+      default: true
+    port: 443         # Port Traefik listens to inside the cluster
+    exposedPort: 443  # External port exposed (NodePort or LoadBalancer)
+    protocol: TCP
+    tls:
+      enabled: true
+
+  syslog:
+    expose:
+      default: true
+    port: 514
+    exposedPort: 514
+    protocol: UDP
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+    tls:
+      enabled: true
+  syslog:
+    address: ":514/udp"
+
+
+
+providers:
+  kubernetesCRD:
+    allowCrossNamespace: true
+
+logs:
+  general:
+    level: DEBUG
+    format: common

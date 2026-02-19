@@ -1,0 +1,24 @@
+services:
+  copyparty:
+    image: copyparty/ac:latest
+    container_name: copyparty
+    user: "3000:3000"
+    ports:
+      - 3923:3923
+
+    volumes:
+      - ${COPYPARTY_CONFIG_PATH}:/cfg
+      - ${GHOSTSILO_PATH}:/ro:ro
+      - ${COPYPARTY_UPLOADS_PATH}:/w
+
+    environment:
+      PYTHONUNBUFFERED: 1
+
+    stop_grace_period: 15s
+
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q 127.0.0.1:3923/?reset=/._"]
+      interval: 1m
+      timeout: 2s
+      retries: 5
+      start_period: 15s

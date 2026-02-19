@@ -1,0 +1,12 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: promtail-syslog
+  namespace: infra
+spec:
+  entryPoints:
+    - syslog
+  routes:
+    - services:
+        - name: promtail
+          port: 514

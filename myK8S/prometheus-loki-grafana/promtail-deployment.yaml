@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: promtail
+  namespace: infra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: promtail
+  template:
+    metadata:
+      labels:
+        app: promtail
+    spec:
+      containers:
+        - name: promtail
+          image: grafana/promtail:latest
+          args:
+            - "-config.file=/etc/promtail/promtail.yaml"
+          ports:
+            - containerPort: 514
+              protocol: UDP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/promtail
+            - name: opnsense-logs
+              mountPath: /var/log/opnsense
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: promtail-config
+        - name: opnsense-logs
+          persistentVolumeClaim:
+            claimName: syslog-ng-logs-pvc
