@@ -17,6 +17,10 @@ data:
         static_configs:
           - targets: ${NODE_EXPORTER_TARGETS}
 
+      - job_name: "cadvisor"
+        static_configs:
+          - targets: ${CADVISOR_TARGETS}
+
       - job_name: "kube-state-metrics"
         static_configs:
           - targets:
