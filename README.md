@@ -2,6 +2,8 @@
 
 Infrastructure-as-code for a self-hosted homelab running on Proxmox, k3s, and Docker. Covers media automation, personal productivity, home automation, observability, and more — without depending on cloud services.
 
+![Homelab Architecture](diagrams/homelab-diagram.jpg)
+
 ---
 
 ## Stack
@@ -24,7 +26,7 @@ Infrastructure-as-code for a self-hosted homelab running on Proxmox, k3s, and Do
 ### Kubernetes (`myK8S/`)
 
 **Media**
-- [Sonarr](https://sonarr.tv) · [Radarr](https://radarr.video) · [Prowlarr](https://prowlarr.com) · [Readarr](https://readarr.com) · [LazyLibrarian](https://lazylibrarian.gitlab.io)
+- [Sonarr](https://sonarr.tv) · [Radarr](https://radarr.video) · [Prowlarr](https://prowlarr.com) · [LazyLibrarian](https://lazylibrarian.gitlab.io)
 - [RDT-Client](https://github.com/rogerfar/rdt-client) · [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr)
 - [Audiobookshelf](https://www.audiobookshelf.org) · [Kavita](https://www.kavitareader.com)
 
@@ -181,7 +183,7 @@ Cloudflare DNS (wildcard A record)
         → App pod or Docker VM
 ```
 
-External Docker services (Immich, Nextcloud, etc.) use a Service + EndpointSlice + Ingress stub in the `externalinfra` namespace — Traefik routes the domain to the Docker VM IP without any pods.
+External Docker services (Immich, Nextcloud, etc.) use a Service + EndpointSlice + Ingress stub in the `external-infra` namespace — Traefik routes the domain to the Docker VM IP without any pods.
 
 ---
 
