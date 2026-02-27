@@ -1,0 +1,59 @@
+# 1. Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: youtube-dl-service
+  namespace: external-infra
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8888
+---
+# 2. EndpointSlice
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: youtube-dl-slice
+  namespace: external-infra
+  labels:
+    kubernetes.io/service-name: youtube-dl-service
+addressType: IPv4
+ports:
+  - name: http
+    port: 8888
+    protocol: TCP
+endpoints:
+  - addresses:
+      - "${YT_DL_IP}"
+    conditions:
+      ready: true
+---
+# 3. Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: youtube-dl-ingress
+  namespace: external-infra
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod-cf"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - "yt.${BASE_DOMAIN}"
+      secretName: youtube-dl-tls-secret
+  rules:
+    - host: "yt.${BASE_DOMAIN}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: youtube-dl-service
+                port:
+                  number: 80
