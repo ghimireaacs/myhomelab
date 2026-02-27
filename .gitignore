@@ -24,3 +24,6 @@ docs/
 
 # Claude Code local settings
 .claude/
+
+# Thumbnails
+Thumbs.db

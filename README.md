@@ -42,6 +42,7 @@ Infrastructure-as-code for a self-hosted homelab running on Proxmox, k3s, and Do
 [Immich](https://immich.app) · [Nextcloud](https://nextcloud.com) · [n8n](https://n8n.io) · [Ollama](https://ollama.com) + [Open WebUI](https://github.com/open-webui/open-webui)
 [Portainer](https://www.portainer.io) · [Pi-hole](https://pi-hole.net) · [Uptime Kuma](https://github.com/louislam/uptime-kuma) · [Dozzle](https://dozzle.dev)
 [Copyparty](https://github.com/9001/copyparty) · [Radicale](https://radicale.org) · [RustDesk](https://rustdesk.com) · [HomeAssistant](https://www.home-assistant.io)
+[youtube-dl-server](https://github.com/nbr23/youtube-dl-server)
 
 ---
 
