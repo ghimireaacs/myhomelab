@@ -1,0 +1,13 @@
+# Run with docker compose up -d
+services:
+  youtube-dl:
+    image: "nbr23/youtube-dl-server:latest"
+    container_name: youtube-dl-server
+    volumes:
+      - ${YT_DOWNLOAD_PATH}:/youtube-dl
+      - ${YTDLP_CONFIG_PATH}:/app_config #config.yml, The config file is in current root folder, copy it and adjut path in .env
+    ports:
+      - 8888:8080
+    restart: always
+
+
