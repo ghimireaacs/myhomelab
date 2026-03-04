@@ -24,3 +24,62 @@ spec:
                 secretKeyRef:
                   name: grafana-admin
                   key: admin-password
+            - name: GF_SERVER_ROOT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin
+                  key: root-url
+            # Authentik OAuth
+            - name: AUTHENTIK_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin
+                  key: oauth-base-url
+            - name: GF_AUTH_GENERIC_OAUTH_ENABLED
+              value: "true"
+            - name: GF_AUTH_GENERIC_OAUTH_NAME
+              value: "Authentik"
+            - name: GF_AUTH_GENERIC_OAUTH_SCOPES
+              value: "openid email profile"
+            - name: GF_AUTH_GENERIC_OAUTH_AUTH_URL
+              value: "$(AUTHENTIK_BASE_URL)/application/o/authorize/"
+            - name: GF_AUTH_GENERIC_OAUTH_TOKEN_URL
+              value: "$(AUTHENTIK_BASE_URL)/application/o/token/"
+            - name: GF_AUTH_GENERIC_OAUTH_API_URL
+              value: "$(AUTHENTIK_BASE_URL)/application/o/userinfo/"
+            - name: GF_AUTH_SIGNOUT_REDIRECT_URL
+              value: "$(AUTHENTIK_BASE_URL)/application/o/grafana/end-session/"
+            - name: GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH
+              value: "contains(groups, 'authentik Admins') && 'Admin' || contains(groups, 'grafana-admins') && 'Admin' || 'Viewer'"
+            - name: GF_AUTH_GENERIC_OAUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin
+                  key: oauth-client-id
+            - name: GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin
+                  key: oauth-client-secret
+          volumeMounts:
+            - name: grafana-data
+              mountPath: /var/lib/grafana
+            - name: grafana-datasources
+              mountPath: /etc/grafana/provisioning/datasources
+            - name: grafana-dashboard-provider
+              mountPath: /etc/grafana/provisioning/dashboards
+            - name: grafana-dashboard-homelab
+              mountPath: /etc/grafana/dashboards
+      volumes:
+        - name: grafana-data
+          persistentVolumeClaim:
+            claimName: grafana-data-pvc
+        - name: grafana-datasources
+          configMap:
+            name: grafana-datasources
+        - name: grafana-dashboard-provider
+          configMap:
+            name: grafana-dashboard-provider
+        - name: grafana-dashboard-homelab
+          configMap:
+            name: grafana-dashboard-homelab
