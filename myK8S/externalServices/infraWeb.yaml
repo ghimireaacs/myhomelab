@@ -1,0 +1,59 @@
+# 1. Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: infra-service
+  namespace: external-infra
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80          # Traefik talks to 80
+      targetPort: 1313
+---
+# 2. EndpointSlice (The Bridge)
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: infra-slice
+  namespace: external-infra
+  labels:
+    kubernetes.io/service-name: infra-service
+addressType: IPv4
+ports:
+  - name: http
+    port: 1313
+    protocol: TCP
+endpoints:
+  - addresses:
+      - "${INFRA_IP}"
+    conditions:
+      ready: true
+---
+# 3. Ingress (The Route)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: infra-ingress
+  namespace: external-infra
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod-cf"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - "infra.${BASE_DOMAIN}"
+      secretName: infra-tls-secret
+  rules:
+    - host: "infra.${BASE_DOMAIN}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: infra-service
+                port:
+                  number: 80
