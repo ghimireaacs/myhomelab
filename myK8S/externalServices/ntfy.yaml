@@ -1,0 +1,58 @@
+# 1. Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ntfy-service
+  namespace: external-infra
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+---
+# 2. EndpointSlice
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: ntfy-slice
+  namespace: external-infra
+  labels:
+    kubernetes.io/service-name: ntfy-service
+addressType: IPv4
+ports:
+  - name: http
+    port: 2586
+    protocol: TCP
+endpoints:
+  - addresses:
+      - "${NTFY_IP}"
+    conditions:
+      ready: true
+---
+# 3. Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ntfy-ingress
+  namespace: external-infra
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod-cf"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - "ntfy.${BASE_DOMAIN}"
+      secretName: ntfy-tls-secret
+  rules:
+    - host: "ntfy.${BASE_DOMAIN}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ntfy-service
+                port:
+                  number: 80

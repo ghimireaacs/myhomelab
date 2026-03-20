@@ -1,0 +1,79 @@
+# 1. PV + PVC (NFS)
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: wallabag-postgres-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  nfs:
+    server: ${NFS_SERVER_IP}
+    path: ${NFS_WALLABAG_POSTGRES_PATH}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wallabag-postgres-pvc
+  namespace: personal
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: wallabag-postgres-pv
+  resources:
+    requests:
+      storage: 5Gi
+---
+# 2. Postgres Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wallabag-postgres
+  namespace: personal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wallabag-postgres
+  template:
+    metadata:
+      labels:
+        app: wallabag-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          env:
+            - name: POSTGRES_DB
+              value: wallabag
+            - name: POSTGRES_USER
+              value: wallabag
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wallabag-secrets
+                  key: postgres-password
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: wallabag-postgres-pvc
+---
+# 3. Postgres Service (cluster-internal only)
+apiVersion: v1
+kind: Service
+metadata:
+  name: wallabag-postgres
+  namespace: personal
+spec:
+  selector:
+    app: wallabag-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432

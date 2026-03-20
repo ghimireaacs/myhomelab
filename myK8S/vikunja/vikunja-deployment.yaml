@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vikunja
+  namespace: personal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vikunja
+  template:
+    metadata:
+      labels:
+        app: vikunja
+    spec:
+      containers:
+        - name: vikunja
+          image: vikunja/vikunja:latest
+          ports:
+            - containerPort: 3456
+          env:
+            - name: VIKUNJA_SERVICE_JWTSECRET
+              valueFrom:
+                secretKeyRef:
+                  name: vikunja-secrets
+                  key: jwt-secret
+            - name: VIKUNJA_DATABASE_TYPE
+              value: sqlite
+            - name: VIKUNJA_DATABASE_PATH
+              value: /data/vikunja.db
+            - name: VIKUNJA_FILES_BASEPATH
+              value: /data/files
+            - name: VIKUNJA_SERVICE_PUBLICURL
+              value: https://todo.${BASE_DOMAIN}
+            - name: TZ
+              value: Australia/Sydney
+          volumeMounts:
+            - name: vikunja-storage
+              mountPath: /data
+      volumes:
+        - name: vikunja-storage
+          persistentVolumeClaim:
+            claimName: vikunja-pvc

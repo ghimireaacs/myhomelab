@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: semaphore
+  namespace: infra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: semaphore
+  template:
+    metadata:
+      labels:
+        app: semaphore
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox
+          command: ['sh', '-c', 'until nc -z semaphore-postgres 5432; do echo waiting for postgres; sleep 2; done']
+      containers:
+        - name: semaphore
+          image: semaphoreui/semaphore:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: SEMAPHORE_DB_HOST
+              value: semaphore-postgres
+            - name: SEMAPHORE_DB_PORT
+              value: "5432"
+            - name: SEMAPHORE_DB_USER
+              value: semaphore
+            - name: SEMAPHORE_DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: semaphore-secrets
+                  key: db-password
+            - name: SEMAPHORE_DB_DIALECT
+              value: postgres
+            - name: SEMAPHORE_DB
+              value: semaphore
+            - name: SEMAPHORE_ADMIN
+              value: ghost
+            - name: SEMAPHORE_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: semaphore-secrets
+                  key: admin-password
+            - name: SEMAPHORE_ADMIN_NAME
+              value: Ghost
+            - name: SEMAPHORE_ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: semaphore-secrets
+                  key: admin-email
+            - name: SEMAPHORE_ACCESS_KEY_ENCRYPTION
+              valueFrom:
+                secretKeyRef:
+                  name: semaphore-secrets
+                  key: access-key-encryption
+            - name: SEMAPHORE_COOKIE_HASH
+              valueFrom:
+                secretKeyRef:
+                  name: semaphore-secrets
+                  key: cookie-hash
+            - name: SEMAPHORE_COOKIE_ENCRYPTION
+              valueFrom:
+                secretKeyRef:
+                  name: semaphore-secrets
+                  key: cookie-encryption
+            - name: SEMAPHORE_TOTP_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: semaphore-secrets
+                  key: totp-secret

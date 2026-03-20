@@ -16,6 +16,13 @@ spec:
       containers:
         - name: lazylibrarian
           image: lscr.io/linuxserver/lazylibrarian:latest
+          env:
+            - name: PUID
+              value: "3000"
+            - name: PGID
+              value: "3000"
+            - name: TZ
+              value: Australia/Sydney
           ports:
             - containerPort: 5299
           volumeMounts:

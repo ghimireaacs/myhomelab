@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: trilium-ingress
+  namespace: personal
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod-cf"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - "notes.${BASE_DOMAIN}"
+      secretName: trilium-tls-secret
+  rules:
+    - host: "notes.${BASE_DOMAIN}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: trilium-svc
+                port:
+                  number: 80

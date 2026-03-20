@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trilium
+  namespace: personal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trilium
+  template:
+    metadata:
+      labels:
+        app: trilium
+    spec:
+      containers:
+        - name: trilium
+          image: triliumnext/trilium:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: TRILIUM_DATA_DIR
+              value: /home/node/trilium-data
+          volumeMounts:
+            - name: trilium-storage
+              mountPath: /home/node/trilium-data
+            - name: localtime
+              mountPath: /etc/localtime
+              readOnly: true
+      volumes:
+        - name: trilium-storage
+          persistentVolumeClaim:
+            claimName: trilium-pvc
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+            type: File
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trilium-svc
+  namespace: personal
+spec:
+  selector:
+    app: trilium
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080

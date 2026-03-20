@@ -21,6 +21,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: web
+                name: karakeep-svc
                 port:
                   number: 3000

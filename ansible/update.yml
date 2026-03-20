@@ -1,0 +1,48 @@
+---
+- name: Update all VMs
+  hosts: linux
+  become: true
+
+  vars:
+    do_reboot: false
+
+  tasks:
+    - name: Update and upgrade packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+        autoremove: yes
+        autoclean: yes
+
+    - name: Clean unused Docker volumes
+      shell: docker volume prune -f
+      ignore_errors: true
+
+    - name: Clean unused Docker images
+      shell: docker image prune -f
+      ignore_errors: true
+
+    - name: Check if reboot needed
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_file
+
+    - name: Print reboot notice
+      debug:
+        msg: "{{ inventory_hostname }} needs a reboot"
+      when: reboot_file.stat.exists
+
+    - name: Reboot if required
+      reboot:
+        reboot_timeout: 120
+      when:
+        - reboot_file.stat.exists
+        - do_reboot | bool
+
+    - name: Wait for host to come back
+      wait_for_connection:
+        delay: 10
+        timeout: 120
+      when:
+        - reboot_file.stat.exists
+        - do_reboot | bool
