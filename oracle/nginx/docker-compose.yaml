@@ -1,0 +1,19 @@
+services:
+  app:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "81:81"
+    volumes:
+      - ~/data/npm/data:/data
+      - ~/data/letsencrypt:/etc/letsencrypt
+    networks:
+      - wiki-net
+
+networks:
+  wiki-net:
+    external: true
+    name: wiki-net
