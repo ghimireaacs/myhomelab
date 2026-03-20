@@ -1,0 +1,273 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage-config
+  namespace: personal
+data:
+  settings.yaml: |
+    title: Ghost's Homelab
+    theme: dark
+    color: amber
+    headerStyle: boxedWidgets
+    statusStyle: dot
+    useEqualHeights: true
+
+    layout:
+      Infrastructure:
+        tab: Home
+        style: row
+        columns: 4
+      Productivity:
+        tab: Home
+        style: row
+        columns: 5
+      Media Libraries:
+        tab: Media
+        style: row
+        columns: 4
+      Media Management:
+        tab: Media
+        style: row
+        columns: 4
+      Monitoring & Ops:
+        tab: Monitoring
+        style: row
+        columns: 5
+
+  widgets.yaml: |
+    - search:
+        provider: custom
+        url: https://search.${BASE_DOMAIN}/search?q=
+        target: _blank
+        suggestionUrl: https://search.${BASE_DOMAIN}/autocomplete?q=
+        suggestions: true
+    - datetime:
+        text_size: xl
+        format:
+          timeStyle: short
+          dateStyle: long
+          hourCycle: h23
+    - greeting:
+        text_size: xl
+        text: "G'day, Ghost"
+
+  services.yaml: |
+    - Infrastructure:
+        - OPNsense:
+            href: http://10.10.10.1
+            description: Firewall / router
+            icon: si-opnsense
+            ping: http://10.10.10.1
+        - Proxmox:
+            href: https://proxmox.${BASE_DOMAIN}
+            description: Hypervisor
+            icon: si-proxmox
+            ping: https://proxmox.${BASE_DOMAIN}
+        - TrueNAS:
+            href: https://truenas.${BASE_DOMAIN}
+            description: NAS / NFS
+            icon: si-truenas
+            ping: https://truenas.${BASE_DOMAIN}
+        - Traefik:
+            href: https://traefik.${BASE_DOMAIN}
+            description: Reverse proxy
+            icon: si-traefikproxy
+            ping: https://traefik.${BASE_DOMAIN}
+        - Authentik:
+            href: https://auth.${BASE_DOMAIN}
+            description: SSO / IdP
+            icon: si-auth0
+            ping: https://auth.${BASE_DOMAIN}
+        - Home Assistant:
+            href: https://ha.${BASE_DOMAIN}
+            description: Home automation
+            icon: si-homeassistant
+            ping: https://ha.${BASE_DOMAIN}
+        - Infra Docs:
+            href: https://infra.${BASE_DOMAIN}
+            description: Infrastructure docs
+            icon: mdi-book-open-variant
+            ping: https://infra.${BASE_DOMAIN}
+        - AusINT:
+            href: http://10.10.10.114:8088
+            description: Internal tool
+            icon: mdi-web
+            ping: http://10.10.10.114:8088
+
+    - Productivity:
+        - n8n:
+            href: https://n8n.${BASE_DOMAIN}
+            description: Workflow automation
+            icon: si-n8n
+            ping: https://n8n.${BASE_DOMAIN}
+        - Nextcloud:
+            href: https://cloud.${BASE_DOMAIN}
+            description: File sync & cloud
+            icon: si-nextcloud
+            ping: https://cloud.${BASE_DOMAIN}
+        - Ollama AI:
+            href: https://ai.${BASE_DOMAIN}
+            description: Local LLM / Open WebUI
+            icon: di-ollama
+            ping: https://ai.${BASE_DOMAIN}
+        - Paperless:
+            href: https://paperless.${BASE_DOMAIN}
+            description: Document management
+            icon: di-paperless-ngx
+            ping: https://paperless.${BASE_DOMAIN}
+        - Karakeep:
+            href: https://karakeep.${BASE_DOMAIN}
+            description: Bookmark manager
+            icon: di-karakeep
+            ping: https://karakeep.${BASE_DOMAIN}
+        - Wallabag:
+            href: https://read.${BASE_DOMAIN}
+            description: Read-it-later
+            icon: di-wallabag
+            ping: https://read.${BASE_DOMAIN}
+        - Radicale:
+            href: https://radicale.${BASE_DOMAIN}
+            description: CalDAV / CardDAV
+            icon: di-radicale
+            ping: https://radicale.${BASE_DOMAIN}
+        - Trilium:
+            href: https://notes.${BASE_DOMAIN}
+            description: Notes
+            icon: di-trilium
+            ping: https://notes.${BASE_DOMAIN}
+        - Vikunja:
+            href: https://todo.${BASE_DOMAIN}
+            description: Task management
+            icon: di-vikunja
+            ping: https://todo.${BASE_DOMAIN}
+        - Wallos:
+            href: https://wallos.${BASE_DOMAIN}
+            description: Subscription tracker
+            icon: di-wallos
+            ping: https://wallos.${BASE_DOMAIN}
+        - SearXNG:
+            href: https://search.${BASE_DOMAIN}
+            description: Private search
+            icon: di-searxng
+            ping: https://search.${BASE_DOMAIN}
+        - CopyParty:
+            href: https://files.${BASE_DOMAIN}
+            description: File sharing
+            icon: mdi-folder-upload
+            ping: https://files.${BASE_DOMAIN}
+        - Shuttle:
+            href: https://shuttle.${BASE_DOMAIN}
+            description: Pastebin / code share
+            icon: mdi-rocket-launch
+            ping: https://shuttle.${BASE_DOMAIN}
+
+    - Media Libraries:
+        - Jellyfin:
+            href: https://jellyfin.${BASE_DOMAIN}
+            description: Media server
+            icon: di-jellyfin
+            ping: https://jellyfin.${BASE_DOMAIN}
+        - Immich:
+            href: https://immich.${BASE_DOMAIN}
+            description: Photo & video library
+            icon: di-immich
+            ping: https://immich.${BASE_DOMAIN}
+        - Audiobookshelf:
+            href: https://audiobook.${BASE_DOMAIN}
+            description: Audiobooks & podcasts
+            icon: di-audiobookshelf
+            ping: https://audiobook.${BASE_DOMAIN}
+        - Kavita:
+            href: https://kavita.${BASE_DOMAIN}
+            description: Ebooks & manga
+            icon: di-kavita
+            ping: https://kavita.${BASE_DOMAIN}
+
+    - Media Management:
+        - Prowlarr:
+            href: https://prowlarr.${BASE_DOMAIN}
+            description: Indexer manager
+            icon: di-prowlarr
+            ping: https://prowlarr.${BASE_DOMAIN}
+        - Radarr:
+            href: https://radarr.${BASE_DOMAIN}
+            description: Movies
+            icon: di-radarr
+            ping: https://radarr.${BASE_DOMAIN}
+        - Sonarr:
+            href: https://sonarr.${BASE_DOMAIN}
+            description: TV shows
+            icon: di-sonarr
+            ping: https://sonarr.${BASE_DOMAIN}
+        - LazyLibrarian:
+            href: https://lazylibrarian.${BASE_DOMAIN}
+            description: Books & audiobooks
+            icon: mdi-book-search
+            ping: https://lazylibrarian.${BASE_DOMAIN}
+        - RDT Client:
+            href: https://rdt.${BASE_DOMAIN}
+            description: Real-Debrid client
+            icon: di-real-debrid
+            ping: https://rdt.${BASE_DOMAIN}
+        - YT Downloader:
+            href: https://yt.${BASE_DOMAIN}
+            description: YouTube-DL server
+            icon: di-yt-dlp
+            ping: https://yt.${BASE_DOMAIN}
+
+    - Monitoring & Ops:
+        - Uptime Kuma:
+            href: https://uptime.${BASE_DOMAIN}
+            description: Service health
+            icon: si-uptimekuma
+            ping: https://uptime.${BASE_DOMAIN}
+        - Grafana:
+            href: https://grafana.${BASE_DOMAIN}
+            description: Metrics & logs
+            icon: di-grafana
+            ping: https://grafana.${BASE_DOMAIN}
+        - Dozzle:
+            href: https://dozzle.${BASE_DOMAIN}
+            description: Docker log viewer
+            icon: di-dozzle
+            ping: https://dozzle.${BASE_DOMAIN}
+        - Portainer:
+            href: https://portainer.${BASE_DOMAIN}
+            description: Docker management
+            icon: si-portainer
+            ping: https://portainer.${BASE_DOMAIN}
+        - Pi-hole:
+            href: https://pihole.${BASE_DOMAIN}
+            description: DNS ad blocker
+            icon: si-pihole
+            ping: https://pihole.${BASE_DOMAIN}
+
+  bookmarks.yaml: |
+    - Icon Resources:
+        - Simple Icons:
+            - href: https://simpleicons.org/
+              icon: si-simpleicons
+        - Selfhost Icons:
+            - href: https://selfh.st/icons/
+              icon: mdi-image-search
+        - Dashboard Icons:
+            - href: https://dashboardicons.com
+              icon: di-dashboard-icons
+        - Material Design Icons:
+            - href: https://pictogrammers.com/library/mdi/
+              icon: mdi-material-ui
+
+  kubernetes.yaml: |
+    mode: disabled
+
+  docker.yaml: |
+    {}
+
+  custom.css: |
+    /* Dark charcoal background — not pure black */
+    body, #page_wrapper {
+      background-color: #111318 !important;
+    }
+    #page_wrapper {
+      background-image: none !important;
+    }

@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homepage-ingress
+  namespace: personal
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod-cf
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - home.${BASE_DOMAIN}
+      secretName: homepage-tls-secret
+  rules:
+    - host: home.${BASE_DOMAIN}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: homepage-svc
+                port:
+                  number: 80
+# NOTE: Once verified, to replace Glance at the root domain:
+#   1. Delete or stop routing glance-ingress
+#   2. Change host above to ${BASE_DOMAIN} (no subdomain)
+#   3. Re-apply this file

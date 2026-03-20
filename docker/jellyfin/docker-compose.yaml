@@ -1,0 +1,22 @@
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    environment:
+      - PUID=3000
+      - PGID=3000
+      - TZ=Australia/Sydney
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    ports:
+      - "8096:8096"
+    volumes:
+      - ${JELLYFIN_CONFIG_PATH}:/config
+      - ${JELLYFIN_CACHE_PATH}:/cache
+      - ${MEDIA_MOVIES_PATH}:/media/movies:ro
+      - ${MEDIA_TV_PATH}:/media/tv:ro
+      - ${MEDIA_AUDIOBOOKS_PATH}:/media/audiobooks:ro
+      - ${MEDIA_PODCASTS_PATH}:/media/podcasts:ro
+      - ${MEDIA_YOUTUBE_PATH}:/media/youtube:ro
+    gpus: all

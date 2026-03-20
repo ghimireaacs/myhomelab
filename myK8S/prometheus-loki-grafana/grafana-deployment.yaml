@@ -61,6 +61,16 @@ spec:
                 secretKeyRef:
                   name: grafana-admin
                   key: oauth-client-secret
+            - name: NTFY_ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin
+                  key: ntfy-admin-token
+            - name: NTFY_IP
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin
+                  key: ntfy-ip
           volumeMounts:
             - name: grafana-data
               mountPath: /var/lib/grafana
@@ -70,6 +80,8 @@ spec:
               mountPath: /etc/grafana/provisioning/dashboards
             - name: grafana-dashboard-homelab
               mountPath: /etc/grafana/dashboards
+            - name: grafana-alerting
+              mountPath: /etc/grafana/provisioning/alerting
       volumes:
         - name: grafana-data
           persistentVolumeClaim:
@@ -83,3 +95,6 @@ spec:
         - name: grafana-dashboard-homelab
           configMap:
             name: grafana-dashboard-homelab
+        - name: grafana-alerting
+          configMap:
+            name: grafana-alerting

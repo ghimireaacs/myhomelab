@@ -1,0 +1,18 @@
+services:
+  syncthing:
+    image: syncthing/syncthing:latest
+    container_name: syncthing
+    hostname: homeserver-syncthing
+    restart: unless-stopped
+    environment:
+      - PUID=3000
+      - PGID=3000
+      - TZ=Australia/Sydney
+    ports:
+      - "8384:8384"     # Web UI
+      - "22000:22000/tcp"  # Sync protocol
+      - "22000:22000/udp"  # Sync protocol QUIC
+      - "21027:21027/udp"  # Local discovery
+    volumes:
+      - ${SYNCTHING_CONFIG_PATH}:/var/syncthing/config
+      - ${SYNCTHING_DATA_PATH}:/var/syncthing/data

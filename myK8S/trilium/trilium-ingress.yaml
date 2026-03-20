@@ -1,25 +1,26 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: lazylibrarian-ingress
-  namespace: media
+  name: trilium-ingress
+  namespace: personal
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-    cert-manager.io/cluster-issuer: letsencrypt-prod-cf
+    cert-manager.io/cluster-issuer: "letsencrypt-prod-cf"
 spec:
   ingressClassName: traefik
   tls:
-    - hosts: [lazylibrarian.${BASE_DOMAIN}]
-      secretName: lazylibrarian-tls-secret
+    - hosts:
+        - "notes.${BASE_DOMAIN}"
+      secretName: trilium-tls-secret
   rules:
-    - host: lazylibrarian.${BASE_DOMAIN}
+    - host: "notes.${BASE_DOMAIN}"
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: lazylibrarian-svc
+                name: trilium-svc
                 port:
                   number: 80

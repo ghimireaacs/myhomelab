@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: web
+  name: karakeep
   namespace: personal
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: web
+      app: karakeep
   template:
     metadata:
       labels:
-        app: web
+        app: karakeep
     spec:
       containers:
-      - name: web
+      - name: karakeep
         image: ghcr.io/karakeep-app/karakeep:latest
         ports:
         - containerPort: 3000
@@ -25,53 +25,47 @@ spec:
           value: http://chrome:9222
         - name: DATA_DIR
           value: /data
-
         - name: NEXTAUTH_SECRET
           valueFrom:
             secretKeyRef:
               name: karakeep-secrets
               key: NEXTAUTH_SECRET
-
         - name: APP_SECRET_KEY
           valueFrom:
             secretKeyRef:
               name: karakeep-secrets
               key: APP_SECRET_KEY
-
         - name: OLLAMA_BASE_URL
           valueFrom:
             secretKeyRef:
               name: karakeep-secrets
               key: OLLAMA_BASE_URL
-
         - name: INFERENCE_TEXT_MODEL
           valueFrom:
             secretKeyRef:
               name: karakeep-secrets
               key: INFERENCE_TEXT_MODEL
-
         - name: SMTP_PASSWORD
           valueFrom:
             secretKeyRef:
               name: karakeep-secrets
               key: SMTP_PASSWORD
-
         volumeMounts:
-        - name: web-storage
+        - name: karakeep-storage
           mountPath: /data
       volumes:
-      - name: web-storage
+      - name: karakeep-storage
         persistentVolumeClaim:
           claimName: karakeep-web-pvc
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: web
+  name: karakeep-svc
   namespace: personal
 spec:
   type: ClusterIP
   selector:
-    app: web
+    app: karakeep
   ports:
   - port: 3000

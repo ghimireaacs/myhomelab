@@ -1,0 +1,19 @@
+services:
+  ntfy:
+    image: binwiederhier/ntfy
+    container_name: ntfy
+    command: serve
+    restart: unless-stopped
+    environment:
+      - TZ=Australia/Sydney
+      - NTFY_BASE_URL=https://ntfy.${BASE_DOMAIN}
+      - NTFY_BEHIND_PROXY=true
+      - NTFY_AUTH_DEFAULT_ACCESS=deny-all
+      - NTFY_CACHE_FILE=/var/cache/ntfy/cache.db
+      - NTFY_AUTH_FILE=/var/lib/ntfy/user.db
+      - NTFY_ATTACHMENT_CACHE_DIR=/var/cache/ntfy/attachments
+    ports:
+      - "2586:80"
+    volumes:
+      - ${NTFY_CACHE_PATH}:/var/cache/ntfy
+      - ${NTFY_DATA_PATH}:/var/lib/ntfy

@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alerting
+  namespace: infra
+data:
+  alerting.yaml: |
+    apiVersion: 1
+
+    contactPoints:
+      - orgId: 1
+        name: ntfy
+        receivers:
+          - uid: ntfy-receiver
+            type: webhook
+            disableResolveMessage: false
+            settings:
+              url: http://${NTFY_IP}:2586/homelab-alerts
+              httpMethod: POST
+              authorizationScheme: Bearer
+              authorizationCredentials: ${NTFY_ADMIN_TOKEN}
+
+    policies:
+      - orgId: 1
+        receiver: ntfy
+        group_by: ['alertname', 'instance']
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 4h
+
+    groups:
+      - orgId: 1
+        name: storage-alerts
+        folder: Homelab Alerts
+        interval: 1m
+        rules:
+          - uid: disk-high-usage
+            title: "High Disk Usage"
+            condition: B
+            data:
+              - refId: A
+                relativeTimeRange:
+                  from: 300
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  expr: '(1 - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|devtmpfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs|devtmpfs"}) * 100'
+                  refId: A
+                  instant: true
+              - refId: B
+                datasourceUid: '-100'
+                model:
+                  type: threshold
+                  refId: B
+                  expression: A
+                  conditions:
+                    - evaluator:
+                        type: gt
+                        params: [85]
+                      operator:
+                        type: and
+                      query:
+                        params: [A]
+                      reducer:
+                        type: last
+            noDataState: NoData
+            execErrState: Error
+            for: 5m
+            annotations:
+              summary: "High disk usage on {{ $labels.instance }}"
+              description: "{{ $labels.mountpoint }} on {{ $labels.instance }} is at {{ printf \"%.1f\" $value }}% — check and prune."
+            labels:
+              severity: warning
+            isPaused: false

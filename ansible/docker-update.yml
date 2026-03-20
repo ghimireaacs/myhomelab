@@ -1,0 +1,15 @@
+---
+- name: Update Docker containers on all VMs
+  hosts: docker_vms
+  become: true
+
+  tasks:
+    - name: Pull and restart all stacks in myhomelab/docker
+      shell: |
+        for dir in ~/ghostsilo/99_System/Claude\ Codes/myhomelab/docker/*/; do
+          [ -f "$dir/docker-compose.yaml" ] && cd "$dir" && docker compose pull && docker compose up -d
+        done
+      args:
+        executable: /bin/bash
+      become: false
+      ignore_errors: true
