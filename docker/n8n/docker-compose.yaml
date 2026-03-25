@@ -5,7 +5,6 @@ services:
     restart: always
     ports:
       - "5678:5678"
-
     environment:
       - N8N_HOST=${SUBDOMAIN}.${DOMAIN_NAME}
       - N8N_PORT=5678
@@ -21,7 +20,12 @@ services:
       - N8N_METRICS=false
       - N8N_FEATURE_FLAGS_ENABLED=false
       - N8N_LOG_LEVEL=info
-
     volumes:
       - ${N8N_DATA_PATH}:/home/node/.n8n
       - ${N8N_FILES_PATH}:/files
+    networks:
+      - cloudflare
+
+networks:
+  cloudflare:
+    external: true

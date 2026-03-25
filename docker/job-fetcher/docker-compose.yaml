@@ -1,0 +1,9 @@
+services:
+  job-fetcher:
+    container_name: job-fetcher
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-8766}:8766"
+    restart: unless-stopped

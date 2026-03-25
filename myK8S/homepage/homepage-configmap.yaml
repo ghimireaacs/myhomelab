@@ -241,6 +241,21 @@ data:
             description: DNS ad blocker
             icon: si-pihole
             ping: https://pihole.${BASE_DOMAIN}
+        - Semaphore:
+            href: https://ansible.${BASE_DOMAIN}
+            description: Ansible UI / GitOps
+            icon: mdi-ansible
+            ping: https://ansible.${BASE_DOMAIN}
+        - ntfy:
+            href: https://ntfy.${BASE_DOMAIN}
+            description: Push notifications
+            icon: mdi-bell
+            ping: https://ntfy.${BASE_DOMAIN}
+        - Umami:
+            href: https://umami.ashishghimire.com
+            description: Blog analytics
+            icon: si-umami
+            ping: https://umami.ashishghimire.com
 
   bookmarks.yaml: |
     - Icon Resources:

@@ -1,0 +1,35 @@
+# HTTP — ClusterIP, used by Traefik ingress
+apiVersion: v1
+kind: Service
+metadata:
+  name: forgejo-http
+  namespace: personal
+spec:
+  type: ClusterIP
+  selector:
+    app: forgejo
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+---
+# SSH — LoadBalancer sharing Traefik's IP (10.10.10.220)
+# NOTE: Traefik's service also needs these two annotations added:
+#   metallb.universe.tf/allow-shared-ip: "traefik-shared"
+#   metallb.universe.tf/loadBalancerIPs: 10.10.10.220
+apiVersion: v1
+kind: Service
+metadata:
+  name: forgejo-ssh
+  namespace: personal
+  annotations:
+    metallb.universe.tf/allow-shared-ip: "traefik-shared"
+    metallb.universe.tf/loadBalancerIPs: ${TRAEFIK_LB_IP}
+spec:
+  type: LoadBalancer
+  selector:
+    app: forgejo
+  ports:
+    - name: ssh
+      port: 2222
+      targetPort: 2222

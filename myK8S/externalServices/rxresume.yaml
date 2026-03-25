@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rxresume-service
+  namespace: external-infra
+spec:
+  clusterIP: None
+  ports:
+    - name: http
+      port: 3050
+      targetPort: 3050
+      protocol: TCP
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: rxresume-slice
+  namespace: external-infra
+  labels:
+    kubernetes.io/service-name: rxresume-service
+addressType: IPv4
+ports:
+  - name: http
+    port: 3050
+    protocol: TCP
+endpoints:
+  - addresses:
+      - "${UTILITY_IP}"
+    conditions:
+      ready: true
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rxresume-ingress
+  namespace: external-infra
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod-cf
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - "resume.${BASE_DOMAIN}"
+      secretName: rxresume-tls-secret
+  rules:
+    - host: "resume.${BASE_DOMAIN}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rxresume-service
+                port:
+                  number: 3050

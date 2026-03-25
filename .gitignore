@@ -27,3 +27,8 @@ docs/
 
 # Thumbnails
 Thumbs.db
+
+# Media stack (not portfolio-relevant)
+myK8S/media/
+docker/ghostmedia/
+docker/jellyfin/

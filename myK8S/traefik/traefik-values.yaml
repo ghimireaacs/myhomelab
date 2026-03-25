@@ -1,3 +1,8 @@
+service:
+  annotations:
+    metallb.universe.tf/allow-shared-ip: "traefik-shared"
+    metallb.universe.tf/loadBalancerIPs: "10.10.10.220"
+
 ports:
   web:
     expose:
