@@ -1,0 +1,13 @@
+services:
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    restart: unless-stopped
+    ports:
+      - "8787:8080"
+    networks:
+      - db_shared
+
+networks:
+  db_shared:
+    external: true

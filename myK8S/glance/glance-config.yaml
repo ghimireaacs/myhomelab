@@ -19,15 +19,95 @@ data:
       # put its contents here, though multiple pages are easier to manage when separated
       - $include: home.yml
   home.yml: |
-    # content of your home.yml
       - name: Home
-        # Optionally, if you only have a single page you can hide the desktop navigation for a cleaner look
-        # hide-desktop-navigation: true
+        hide-desktop-navigation: false
         columns:
+
+          # LEFT — quick links, calendar, weather
           - size: small
             widgets:
+              - type: bookmarks
+                groups:
+                  - title: Homelab
+                    links:
+                      - title: Homepage
+                        url: https://home.560384.xyz
+                      - title: Grafana
+                        url: https://grafana.560384.xyz
+                      - title: Portainer
+                        url: https://portainer.560384.xyz
+                      - title: Semaphore
+                        url: https://ansible.560384.xyz
+                      - title: ntfy
+                        url: https://ntfy.560384.xyz
+                      - title: Proxmox
+                        url: https://proxmox.560384.xyz
+                  - title: Blog & Docs
+                    links:
+                      - title: Blog
+                        url: https://ashishghimire.com
+                      - title: Umami
+                        url: https://umami.ashishghimire.com
+                      - title: Wiki
+                        url: https://wiki.ashishghimire.com
+
               - type: calendar
                 first-day-of-week: monday
+
+              - type: weather
+                location: Sydney, Australia
+                units: metric
+                hour-format: 12h
+
+          # CENTRE — content feed
+          - size: full
+            widgets:
+              - type: videos
+                channels:
+                  - UCXuqSBlHAE6Xw-yeJA0Tunw # Linus Tech Tips
+                  - UCR-DXc1voovS8nhAvccRZhg # Jeff Geerling
+                  - UCsBjURrPoezykLs9EqgamOA # Fireship
+                  - UCBJycsmduvYEL83R_U4JriQ # Marques Brownlee
+                  - UCHnyfMqiRRG1u-2MsSQLbXA # Veritasium
+
+              - type: group
+                widgets:
+                  - type: hacker-news
+                  - type: lobsters
+
+              - type: group
+                widgets:
+                  - type: reddit
+                    subreddit: selfhosted
+                    show-thumbnails: true
+                  - type: reddit
+                    subreddit: technology
+                    show-thumbnails: true
+
+          # RIGHT — markets, releases, rss, twitch
+          - size: small
+            widgets:
+              - type: markets
+                markets:
+                  - symbol: SPY
+                    name: S&P 500
+                  - symbol: BTC-USD
+                    name: Bitcoin
+                  - symbol: NVDA
+                    name: NVIDIA
+                  - symbol: AAPL
+                    name: Apple
+                  - symbol: MSFT
+                    name: Microsoft
+
+              - type: releases
+                cache: 1d
+                repositories:
+                  - glanceapp/glance
+                  - immich-app/immich
+                  - syncthing/syncthing
+                  - umami-software/umami
+                  - semaphoreui/semaphore
 
               - type: rss
                 limit: 10
@@ -51,60 +131,3 @@ data:
                   - cohhcarnage
                   - christitustech
                   - EJ_SA
-
-          - size: full
-            widgets:
-              - type: group
-                widgets:
-                  - type: hacker-news
-                  - type: lobsters
-
-              - type: videos
-                channels:
-                  - UCXuqSBlHAE6Xw-yeJA0Tunw # Linus Tech Tips
-                  - UCR-DXc1voovS8nhAvccRZhg # Jeff Geerling
-                  - UCsBjURrPoezykLs9EqgamOA # Fireship
-                  - UCBJycsmduvYEL83R_U4JriQ # Marques Brownlee
-                  - UCHnyfMqiRRG1u-2MsSQLbXA # Veritasium
-
-              - type: group
-                widgets:
-                  - type: reddit
-                    subreddit: technology
-                    show-thumbnails: true
-                  - type: reddit
-                    subreddit: selfhosted
-                    show-thumbnails: true
-
-          - size: small
-            widgets:
-              - type: weather
-                location: Sydney, Australia
-                units: metric # alternatively "imperial"
-                hour-format: 12h # alternatively "24h"
-                # Optionally hide the location from being displayed in the widget
-                # hide-location: true
-
-              - type: markets
-                markets:
-                  - symbol: SPY
-                    name: S&P 500
-                  - symbol: BTC-USD
-                    name: Bitcoin
-                  - symbol: NVDA
-                    name: NVIDIA
-                  - symbol: AAPL
-                    name: Apple
-                  - symbol: MSFT
-                    name: Microsoft
-
-              - type: releases
-                cache: 1d
-                # Without authentication the Github API allows for up to 60 requests per hour. You can create a
-                # read-only token from your Github account settings and use it here to increase the limit.
-                # token: ...
-                repositories:
-                  - glanceapp/glance
-                  - go-gitea/gitea
-                  - immich-app/immich
-                  - syncthing/syncthing

@@ -3,22 +3,21 @@ services:
     image: postgres:18.2
     container_name: ${POSTGRES_CONTAINER}
     restart: unless-stopped
-
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-
+    ports:
+      - "10.10.10.114:5432:5432"
     volumes:
       - ${POSTGRES_VOLUME}:/var/lib/postgresql
-
     networks:
-      - n8n_default
+      - db_shared
 
 volumes:
   career_postgres_data:
     name: ${POSTGRES_VOLUME}
 
 networks:
-  n8n_default:
+  db_shared:
     external: true

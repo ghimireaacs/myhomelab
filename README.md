@@ -1,48 +1,131 @@
 # Homelab
 
-Infrastructure-as-code for a self-hosted homelab running on Proxmox, k3s, and Docker. Covers media automation, personal productivity, home automation, observability, and more — without depending on cloud services.
+Infrastructure-as-code for a self-hosted homelab built on Proxmox, k3s, and Docker. Managed entirely through code — VM provisioning via Terraform, configuration and patching via Ansible, Kubernetes workloads via manifests, and secrets kept out of version control throughout.
 
 ![Homelab Architecture](diagrams/homelab-diagram.jpg)
 
 ---
 
-## Stack
+## Infrastructure Stack
 
 | Layer | Technology |
 |---|---|
-| NAS / Storage | TrueNAS + ZFS + NFS |
-| Hypervisor | Proxmox (2-node cluster) |
-| Kubernetes | k3s (1 master + 2 workers) |
-| Ingress | Traefik (Helm) + MetalLB |
+| NAS / Storage | TrueNAS + ZFS (mirror) + NFS |
+| Hypervisor | Proxmox VE (2-node cluster) |
+| VM Provisioning | Terraform (`telmate/proxmox` provider) + cloud-init |
+| Configuration Management | Ansible (patching, Docker install, container updates) |
+| Kubernetes | k3s (1 master + 2 workers across 2 Proxmox nodes) |
+| Ingress | Traefik (Helm) + MetalLB (bare-metal LoadBalancer) |
 | TLS | cert-manager + Let's Encrypt via Cloudflare DNS-01 |
-| Identity | Authentik (OIDC / forward-auth) |
-| Observability | Prometheus + Loki + Grafana + syslog-ng |
-| Container runtime | Docker Compose (on Proxmox VMs) |
+| Identity / SSO | Authentik (OIDC, forward-auth) |
+| Observability | Prometheus + Loki + Grafana + syslog-ng + Promtail |
+| Container runtime | Docker Compose (per-VM, managed via Ansible) |
+
+---
+
+## Ansible
+
+Playbooks manage the full VM fleet — Docker hosts and k3s nodes — from a single inventory.
+
+**Inventory groups:**
+- `docker_vms` — 5 Docker hosts (ghostgpu, security, nextcloud, utility, ghostmedia)
+- `k3s_workers` — 2 k3s worker nodes
+- `k3s_master` — k3s control plane
+- `linux` — all of the above as a single target
+
+**Playbooks:**
+
+| Playbook | What it does |
+|---|---|
+| `update.yml` | `apt dist-upgrade` + `autoremove` across all Linux hosts. Cleans unused Docker volumes/images. Detects pending reboots and optionally reboots with `do_reboot=true`. |
+| `docker-update.yml` | Iterates every Docker Compose stack and runs `docker compose pull && up -d` — rolling image update across all VMs in one command. |
+| `install-docker.yml` | Idempotent Docker CE installation — adds GPG key, configures apt repo, installs packages, creates docker group, adds user. Run against any new VM with `-e target=<host>`. |
+
+**Usage:**
+```bash
+# Patch all machines
+ansible-playbook -i ansible/inventory.ini ansible/update.yml
+
+# Patch and reboot if needed
+ansible-playbook -i ansible/inventory.ini ansible/update.yml -e do_reboot=true
+
+# Update all Docker stacks
+ansible-playbook -i ansible/inventory.ini ansible/docker-update.yml
+
+# Install Docker on a new VM
+ansible-playbook -i ansible/inventory.ini ansible/install-docker.yml -e target=utility
+```
+
+Ansible runs are managed via [Semaphore](https://semaphoreui.com) — a self-hosted UI for scheduling and auditing playbook executions.
+
+---
+
+## Kubernetes (`myK8S/`)
+
+k3s cluster with Traefik disabled at install — replaced with a Helm-managed Traefik deployment for full control over ingress configuration.
+
+### Identity & Access
+
+**Authentik** — self-hosted identity provider. Handles OIDC and forward-auth for services that support SSO. Deployed via Helm with a dedicated PostgreSQL backend.
+
+### Observability Pipeline
+
+Full log and metrics pipeline — every host and container feeds into a central stack:
+
+```
+Docker hosts / k3s nodes
+  → node-exporter (host metrics)
+  → cadvisor (container metrics)         → Prometheus → Grafana
+  → kube-state-metrics (k8s state)
+
+OPNsense / hosts
+  → syslog-ng (UDP 514 ingestion)
+  → Promtail                             → Loki → Grafana
+```
+
+Grafana has custom dashboards, alerting rules, and data sources committed as code (`grafana-dashboards.yaml`, `grafana-alerting.yaml`, `grafana-datasources.yaml`).
+
+### Networking & TLS
+
+- **MetalLB** — assigns a static LoadBalancer IP (`10.10.10.220`) to Traefik on bare metal
+- **cert-manager** — provisions and renews TLS certificates automatically via Let's Encrypt Cloudflare DNS-01 challenge
+- **Cloudflare DNS** — wildcard `*.yourdomain.com` → MetalLB IP → Traefik → service
+
+External Docker services are exposed through the cluster via `ExternalName` Service stubs — no pods needed, Traefik routes the domain directly to the Docker VM IP.
+
+### Terraform — VM Provisioning
+
+VMs are provisioned from a cloud-init Debian template using the `telmate/proxmox` Terraform provider. Each VM gets: static IP, SSH key injection, user config, and NFS auto-mount via cloud-init.
+
+```bash
+cd terraform
+cp secrets.tfvars.example secrets.tfvars   # Proxmox API credentials
+cp homelab.tfvars.example homelab.tfvars   # VM definitions
+terraform init && terraform apply -var-file=secrets.tfvars -var-file=homelab.tfvars
+```
 
 ---
 
 ## Services
 
-### Kubernetes (`myK8S/`)
+### Kubernetes
 
-**Media**
-- [Sonarr](https://sonarr.tv) · [Radarr](https://radarr.video) · [Prowlarr](https://prowlarr.com) · [LazyLibrarian](https://lazylibrarian.gitlab.io)
-- [RDT-Client](https://github.com/rogerfar/rdt-client) · [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr)
-- [Audiobookshelf](https://www.audiobookshelf.org) · [Kavita](https://www.kavitareader.com)
+| Category | Services |
+|---|---|
+| Personal | Paperless-ngx · SearXNG · Karakeep · Wallos · Vikunja · Trilium · Wallabag · Glance · Homepage |
+| Dev / Tools | Forgejo · Semaphore (Ansible UI) |
+| Identity | Authentik |
+| Observability | Prometheus · Loki · Grafana · syslog-ng · Promtail · node-exporter · kube-state-metrics |
+| Networking | Traefik · MetalLB · cert-manager |
 
-**Personal**
-- [Paperless-ngx](https://docs.paperless-ngx.com) · [SearXNG](https://searxng.github.io/searxng) · [Karakeep](https://karakeep.app)
-- [Wallos](https://github.com/ellite/Wallos) · [Glance](https://github.com/glanceapp/glance)
+### Docker Compose
 
-**Infrastructure**
-- Authentik · Prometheus · Loki · Grafana · syslog-ng · Promtail
-
-### Docker Compose (`docker/`)
-
-[Immich](https://immich.app) · [Nextcloud](https://nextcloud.com) · [n8n](https://n8n.io) · [Ollama](https://ollama.com) + [Open WebUI](https://github.com/open-webui/open-webui)
-[Portainer](https://www.portainer.io) · [Pi-hole](https://pi-hole.net) · [Uptime Kuma](https://github.com/louislam/uptime-kuma) · [Dozzle](https://dozzle.dev)
-[Copyparty](https://github.com/9001/copyparty) · [Radicale](https://radicale.org) · [RustDesk](https://rustdesk.com) · [HomeAssistant](https://www.home-assistant.io)
-[youtube-dl-server](https://github.com/nbr23/youtube-dl-server)
+| Category | Services |
+|---|---|
+| Productivity | Immich · Nextcloud · n8n · Syncthing · Umami |
+| AI / LLM | Ollama + Open WebUI · PaperlessAI |
+| Tools | Adminer · RxResume · Ntfy · Radicale · RustDesk · Copyparty · Pi-hole · Uptime Kuma · youtube-dl-server · Minecraft · Home Assistant |
+| Observability | Portainer · Dozzle |
 
 ---
 
@@ -50,153 +133,53 @@ Infrastructure-as-code for a self-hosted homelab running on Proxmox, k3s, and Do
 
 ```
 .
+├── ansible/                   # Playbooks and inventory
+│   ├── inventory.ini          # All hosts grouped by role
+│   ├── update.yml             # OS patching + Docker cleanup
+│   ├── docker-update.yml      # Rolling Docker Compose updates
+│   └── install-docker.yml     # Idempotent Docker installation
+│
 ├── docker/                    # Docker Compose services
 │   └── <service>/
 │       ├── docker-compose.yaml
-│       └── .env.example       # Copy to .env and fill in real values
+│       └── .env.example
 │
 ├── myK8S/                     # Kubernetes manifests (k3s)
-│   ├── <namespace>/<service>/
-│   │   ├── <service>-pv.yaml
-│   │   ├── <service>-pvc.yaml
-│   │   ├── <service>-deployment.yaml
-│   │   ├── <service>-service.yaml
-│   │   ├── <service>-ingress.yaml
-│   │   └── <service>-secrets.yaml.tmpl
+│   ├── <namespace>/<service>/ # Per-service: pv, pvc, deployment, service, ingress, secrets.tmpl
 │   ├── scripts/apply.sh       # envsubst + kubectl deploy helper
-│   └── .env.example           # Copy to .env and fill in real values
+│   └── .env.example
 │
-├── terraform/                 # Proxmox VM provisioning
-│   ├── modules/vm/            # Reusable VM module (telmate/proxmox)
-│   ├── main.tf
-│   ├── providers.tf
-│   ├── variables.tf
-│   ├── secrets.tfvars.example # Copy to secrets.tfvars — Proxmox API credentials
-│   ├── homelab.tfvars.example # Copy to homelab.tfvars — VM name → IP definitions
-│   └── ssh/                   # Place bootstrap.pub here (gitignored private key)
-│
-└── docs/
-    ├── architecture-outline.md
-    ├── content-plan.md
-    └── blogs/outlines.md
+└── terraform/                 # Proxmox VM provisioning
+    ├── modules/vm/            # Reusable VM module
+    └── ssh/                   # bootstrap.pub (gitignored private key)
 ```
 
 ---
 
-## Secrets & Configuration
+## Secrets Pattern
 
-All secrets and local paths are kept out of version control. Every service has an `.env.example` showing which variables are required — copy it to `.env` and fill in your values.
+No real credentials exist anywhere in this repo. The pattern is consistent across all layers:
 
-### Docker
-
-```bash
-cd docker/<service>
-cp .env.example .env
-# Edit .env with your real paths and secrets
-docker compose up -d
-```
-
-### Kubernetes
-
-All manifests use `${VAR}` placeholders. Real values are injected at deploy time via `envsubst`.
-
-```bash
-cd myK8S
-cp .env.example .env
-# Edit .env with your NFS IPs, domain, secrets, etc.
-
-# Deploy a manifest
-./scripts/apply.sh authentik/authentik-secrets.yaml.tmpl
-
-# Or manually
-set -a; source .env; set +a
-envsubst < authentik/authentik-secrets.yaml.tmpl | kubectl apply -f -
-```
-
-Typical apply order per service:
-```bash
-./scripts/apply.sh <service>-secrets.yaml.tmpl
-./scripts/apply.sh <service>-pv.yaml
-kubectl apply -f <service>-pvc.yaml
-./scripts/apply.sh <service>-deployment.yaml
-kubectl apply -f <service>-service.yaml
-./scripts/apply.sh <service>-ingress.yaml
-```
+| Layer | Template | Real values |
+|---|---|---|
+| Docker | `.env.example` | `.env` (gitignored) |
+| Kubernetes | `*-secrets.yaml.tmpl` + `myK8S/.env.example` | `myK8S/.env` (gitignored), generated via `envsubst` |
+| Terraform | `secrets.tfvars.example` | `secrets.tfvars` (gitignored) |
 
 ---
 
-## Terraform — Proxmox VM Provisioning
+## Observability — Every Host Covered Automatically
 
-VMs are provisioned from a Debian cloud-init template using the `telmate/proxmox` provider.
+Every Docker VM is cloned from a base template that auto-starts four containers:
 
-```bash
-cd terraform
+| Container | Port | Purpose |
+|---|---|---|
+| `portainer-agent` | 9001 | Registers with central Portainer |
+| `dozzle-agent` | 7007 | Registers with central Dozzle |
+| `node-exporter` | 9100 | Host metrics → Prometheus |
+| `cadvisor` | 8080 | Container metrics → Prometheus |
 
-# 1. Copy and fill in credentials
-cp secrets.tfvars.example secrets.tfvars
-
-# 2. Copy and define your VMs
-cp homelab.tfvars.example homelab.tfvars
-
-# 3. Add your SSH public key
-cp ~/.ssh/id_ed25519.pub ssh/bootstrap.pub
-
-# 4. Init and apply
-terraform init
-terraform plan -var-file=secrets.tfvars -var-file=homelab.tfvars
-terraform apply -var-file=secrets.tfvars -var-file=homelab.tfvars
-```
-
-VMs are assigned VMIDs sequentially from `vmid_start` (default: 300), ordered alphabetically by name for stable assignment across runs.
-
----
-
-## Replicating This Setup
-
-### Prerequisites
-
-- A domain managed in Cloudflare (for DNS-01 TLS challenge)
-- An NFS server (TrueNAS or any NFS export)
-- k3s installed with `--disable traefik --disable servicelb`
-- Helm for Traefik, MetalLB, cert-manager, Authentik
-
-### Checklist
-
-- [ ] Configure `myK8S/.env` from `.env.example`
-- [ ] Configure `docker/<service>/.env` from each `.env.example`
-- [ ] Apply namespaces: `kubectl apply -f myK8S/namespaces/`
-- [ ] Deploy MetalLB and configure IP pool
-- [ ] Deploy Traefik via Helm with `myK8S/traefik/traefik-values.yaml`
-- [ ] Deploy cert-manager and configure `ClusterIssuer` with Cloudflare token
-- [ ] Deploy services in dependency order (storage → app → ingress)
-
----
-
-## DNS & Ingress
-
-All services are exposed at `<service>.<your-domain>` via:
-
-```
-Cloudflare DNS (wildcard A record)
-  → MetalLB LoadBalancer IP
-    → Traefik
-      → Kubernetes Service / ExternalName stub
-        → App pod or Docker VM
-```
-
-External Docker services (Immich, Nextcloud, etc.) use a Service + EndpointSlice + Ingress stub in the `external-infra` namespace — Traefik routes the domain to the Docker VM IP without any pods.
-
----
-
-## Observability
-
-Every Docker VM cloned from the base template auto-starts:
-- `node-exporter` — host metrics → Prometheus
-- `cadvisor` — container metrics → Prometheus
-- `dozzle-agent` — logs → central Dozzle
-- `portainer-agent` — management → central Portainer
-
-No manual setup required per host.
+A new VM is fully observable the moment it boots — no manual configuration.
 
 ---
 

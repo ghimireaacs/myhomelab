@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forgejo
+  namespace: personal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: forgejo
+  template:
+    metadata:
+      labels:
+        app: forgejo
+    spec:
+      containers:
+        - name: forgejo
+          image: codeberg.org/forgejo/forgejo:10
+          ports:
+            - name: http
+              containerPort: 3000
+            - name: ssh
+              containerPort: 2222
+          env:
+            - name: FORGEJO__database__DB_TYPE
+              value: sqlite3
+            - name: FORGEJO__database__PATH
+              value: /data/forgejo.db
+            - name: FORGEJO__server__DOMAIN
+              value: git.${BASE_DOMAIN}
+            - name: FORGEJO__server__ROOT_URL
+              value: https://git.${BASE_DOMAIN}
+            - name: FORGEJO__server__SSH_DOMAIN
+              value: git.${BASE_DOMAIN}
+            - name: FORGEJO__server__SSH_PORT
+              value: "2222"
+            - name: FORGEJO__server__SSH_LISTEN_PORT
+              value: "2222"
+            - name: FORGEJO__server__START_SSH_SERVER
+              value: "true"
+            - name: FORGEJO__repository__DEFAULT_BRANCH
+              value: main
+            - name: TZ
+              value: Australia/Sydney
+          volumeMounts:
+            - name: forgejo-storage
+              mountPath: /data
+      volumes:
+        - name: forgejo-storage
+          persistentVolumeClaim:
+            claimName: forgejo-pvc
