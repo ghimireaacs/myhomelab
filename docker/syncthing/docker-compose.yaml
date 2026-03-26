@@ -16,3 +16,4 @@ services:
     volumes:
       - ${SYNCTHING_CONFIG_PATH}:/var/syncthing/config
       - ${SYNCTHING_DATA_PATH}:/var/syncthing/data
+      - ${OBSIDIAN_VAULT_PATH}:/var/syncthing/obsidian-vault
