@@ -33,7 +33,9 @@ spec:
       containers:
         - name: runner
           image: data.forgejo.org/forgejo/runner:12
-          command: ["forgejo-runner", "daemon", "--config", "/config/config.yml"]
+          command: ["sh", "-c", "until [ -S /var/run/docker.sock ]; do sleep 1; done && forgejo-runner daemon --config /config/config.yml"]
+          securityContext:
+            runAsUser: 0
           env:
             - name: DOCKER_HOST
               value: unix:///var/run/docker.sock
