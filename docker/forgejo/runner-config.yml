@@ -1,0 +1,17 @@
+log:
+  level: info
+runner:
+  file: /data/.runner
+  capacity: 2
+  timeout: 3h
+  insecure: false
+cache:
+  enabled: true
+  dir: /data/cache
+container:
+  docker_host: unix:///var/run/docker.sock
+  network: bridge
+  privileged: false
+  force_pull: false
+  valid_volumes:
+    - "**"

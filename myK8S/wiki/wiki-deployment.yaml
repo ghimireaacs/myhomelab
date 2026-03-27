@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wiki
+  namespace: personal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wiki
+  template:
+    metadata:
+      labels:
+        app: wiki
+    spec:
+      imagePullSecrets:
+        - name: forgejo-registry
+      containers:
+        - name: wiki
+          image: git.560384.xyz/ashishghimire/mydocs:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
