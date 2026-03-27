@@ -36,5 +36,9 @@ set -a
 source "$ENV_FILE"
 set +a
 
-# Substitute and apply
-envsubst < "$TEMPLATE" | kubectl apply -f - "$@"
+# If it's a .tmpl file, substitute then apply; plain .yaml files apply directly
+if [[ "$TEMPLATE" == *.tmpl ]]; then
+  envsubst < "$TEMPLATE" | kubectl apply -f - "$@"
+else
+  kubectl apply -f "$TEMPLATE" "$@"
+fi

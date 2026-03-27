@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: forgejo-runner-config
+  namespace: personal
+data:
+  config.yml: |
+    log:
+      level: info
+    runner:
+      file: /data/.runner
+      capacity: 2
+      timeout: 3h
+      insecure: false
+    cache:
+      enabled: true
+      dir: /cache
+    container:
+      docker_host: unix:///var/run/docker.sock
+      network: bridge
+      privileged: false
+      force_pull: false
+      valid_volumes:
+        - "**"
+  register.sh: |
+    #!/bin/sh
+    set -e
+    if [ ! -f /data/.runner ]; then
+      echo "Registering runner..."
+      forgejo-runner -c /config/config.yml register \
+        --no-interactive \
+        --token $RUNNER_TOKEN \
+        --name homelab-k3s-runner \
+        --instance $FORGEJO_URL \
+        --labels ubuntu-latest,linux,k8s
+      echo "Registration complete."
+    else
+      echo "Runner already registered, skipping."
+    fi
