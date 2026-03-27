@@ -1,0 +1,57 @@
+services:
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:14.0.3
+    container_name: forgejo
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "2222:2222"
+    volumes:
+      - ~/forgejo:/data
+    environment:
+      - FORGEJO__database__DB_TYPE=sqlite3
+      - FORGEJO__database__PATH=/data/forgejo.db
+      - FORGEJO__server__DOMAIN=git.${BASE_DOMAIN}
+      - FORGEJO__server__ROOT_URL=https://git.${BASE_DOMAIN}
+      - FORGEJO__server__SSH_DOMAIN=git.${BASE_DOMAIN}
+      - FORGEJO__server__SSH_PORT=2222
+      - FORGEJO__server__SSH_LISTEN_PORT=2222
+      - FORGEJO__server__START_SSH_SERVER=true
+      - FORGEJO__repository__DEFAULT_BRANCH=main
+      - TZ=Australia/Sydney
+      - FORGEJO__actions__DEFAULT_ACTIONS_URL=https://github.com
+
+  forgejo-runner:
+    image: data.forgejo.org/forgejo/runner:12
+    container_name: forgejo-runner
+    user: root
+    restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    depends_on:
+      - forgejo
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - forgejo-runner-data:/data
+      - ./runner-config.yml:/config/config.yml
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - FORGEJO_RUNNER_TOKEN=${FORGEJO_RUNNER_TOKEN}
+    entrypoint:
+      - sh
+      - -c
+      - |
+        if [ ! -f /data/.runner ]; then
+          forgejo-runner register \
+            --no-interactive \
+            --token $$FORGEJO_RUNNER_TOKEN \
+            --name homelab-docker-runner \
+            --instance https://git.${BASE_DOMAIN} \
+            --labels ubuntu-latest,linux,docker \
+            -c /config/config.yml
+        fi
+        exec forgejo-runner daemon --config /config/config.yml
+
+volumes:
+  forgejo-runner-data:
