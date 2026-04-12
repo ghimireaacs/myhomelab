@@ -23,6 +23,11 @@ spec:
         - --disable-dev-shm-usage
         - --remote-debugging-address=0.0.0.0
         - --remote-debugging-port=9222
+        - --js-flags=--max-old-space-size=128
+        - --disable-extensions
+        - --disable-background-networking
+        - --disable-sync
+        - --disable-translate
 ---
 apiVersion: v1
 kind: Service

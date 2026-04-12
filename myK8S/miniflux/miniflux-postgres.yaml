@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: miniflux-postgres
+  namespace: personal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: miniflux-postgres
+  template:
+    metadata:
+      labels:
+        app: miniflux-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          env:
+            - name: POSTGRES_DB
+              value: miniflux
+            - name: POSTGRES_USER
+              value: miniflux
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: miniflux-secrets
+                  key: postgres-password
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: miniflux-postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: miniflux-postgres
+  namespace: personal
+spec:
+  selector:
+    app: miniflux-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432

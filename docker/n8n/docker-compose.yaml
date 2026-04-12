@@ -19,7 +19,10 @@ services:
       - N8N_PERSONALIZATION_ENABLED=false
       - N8N_METRICS=false
       - N8N_FEATURE_FLAGS_ENABLED=false
-      - N8N_LOG_LEVEL=info
+      - N8N_INSIGHTS_ENABLED=false
+      - N8N_LOG_LEVEL=warn
+      - N8N_COMMUNITY_PACKAGES_ENABLED=true
+      - N8N_RUNNERS_ENABLED=false
     volumes:
       - ${N8N_DATA_PATH}:/home/node/.n8n
       - ${N8N_FILES_PATH}:/files

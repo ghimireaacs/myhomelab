@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ytdl-config
+  namespace: personal
+data:
+  config.yml: |
+    ydl_server:
+      port: 8080
+      host: 0.0.0.0
+      debug: False
+      metadata_db_path: '/youtube-dl/.ydl-metadata.db'
+      output_playlist: '/youtube-dl/%(playlist_title)s [%(playlist_id)s]/%(title)s.%(ext)s'
+      max_log_entries: 100
+      forwarded_allow_ips: None
+      proxy_headers: True
+      default_format: video/best
+      download_workers_count: 2
+
+    ydl_options:
+      output: '/youtube-dl/%(title)s [%(id)s].%(ext)s'
+      cache-dir: '/youtube-dl/.cache'
+      ignore-errors: True
+
+    profiles:
+
+      podcast:
+        name: 'Audio Podcasts'
+        ydl_options:
+          output: '/youtube-dl/Podcasts/%(title)s [%(id)s].%(ext)s'
+          format: bestaudio/best
+          extract-audio: True
+          audio-format: mp3
+          audio-quality: 0
+          write-thumbnail: True
+          embed-thumbnail: True
+          add-metadata: True
+
+      music:
+        name: 'Music — Full Quality'
+        ydl_options:
+          output: '/youtube-dl/Music/%(title)s [%(id)s].%(ext)s'
+          format: bestaudio[ext=webm]/bestaudio/best
+          extract-audio: True
+          audio-format: opus
+          audio-quality: 0
+          write-thumbnail: True
+          embed-thumbnail: True
+          add-metadata: True
+
+      watch:
+        name: 'Videos to Watch — Full Quality'
+        ydl_options:
+          output: '/youtube-dl/Watch/%(title)s [%(id)s].%(ext)s'
+          format: bestvideo+bestaudio/best
+          merge-output-format: mp4
+          embed-thumbnail: True
+          add-metadata: True
+          write-sub: True
+          embed-subs: True
+          sub-langs: en
+
+      listen:
+        name: 'Videos to Listen — 1080p'
+        ydl_options:
+          output: '/youtube-dl/Listen/%(title)s [%(id)s].%(ext)s'
+          format: bestvideo[height<=1080]+bestaudio/best[height<=1080]
+          merge-output-format: mp4
+
+      documentary:
+        name: 'Documentary — Full Archive'
+        ydl_options:
+          output: '/youtube-dl/Documentaries/%(title)s [%(id)s]/%(title)s [%(id)s].%(ext)s'
+          format: bestvideo+bestaudio/best
+          merge-output-format: mkv
+          write-thumbnail: True
+          embed-thumbnail: True
+          add-metadata: True
+          embed-chapters: True
+          write-description: True
+          write-info-json: True
+          write-sub: True
+          write-auto-sub: True
+          embed-subs: True
+          sub-langs: en
+          concurrent-fragments: 4

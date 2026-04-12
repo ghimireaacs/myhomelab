@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ytdl-downloads-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  nfs:
+    server: ${NFS_SERVER_IP}
+    path: ${NFS_YTDL_DOWNLOADS_PATH}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ytdl-downloads-pvc
+  namespace: personal
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: ytdl-downloads-pv
+  resources:
+    requests:
+      storage: 10Gi
