@@ -7,6 +7,9 @@ authentik:
 
 
 server:
+  env:
+    - name: AUTHENTIK_WEB__WORKERS
+      value: "1"
   ingress:
     enabled: true
     ingressClassName: traefik
@@ -21,7 +24,10 @@ server:
       traefik.ingress.kubernetes.io/router.tls: "true"
       cert-manager.io/cluster-issuer: letsencrypt-prod-cf
 
+worker:
+  env:
+    - name: AUTHENTIK_WORKER__THREADS
+      value: "1"
+
 postgresql:
   enabled: true
-  auth:
-

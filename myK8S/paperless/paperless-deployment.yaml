@@ -93,12 +93,16 @@ spec:
       containers:
         - name: tika
           image: apache/tika:latest
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xmx128m -Xms64m"
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: paperless
   namespace: personal
+spec:
   replicas: 1
   selector:
     matchLabels:
@@ -107,7 +111,6 @@ metadata:
     metadata:
       labels:
         app: paperless
-
     spec:
       securityContext:
         fsGroup: 3000

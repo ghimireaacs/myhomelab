@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ytdl
+  namespace: personal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ytdl
+  template:
+    metadata:
+      labels:
+        app: ytdl
+    spec:
+      containers:
+        - name: ytdl
+          image: nbr23/youtube-dl-server:latest
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: downloads
+              mountPath: /youtube-dl
+            - name: config
+              mountPath: /app_config
+              readOnly: true
+      volumes:
+        - name: downloads
+          persistentVolumeClaim:
+            claimName: ytdl-downloads-pvc
+        - name: config
+          configMap:
+            name: ytdl-config

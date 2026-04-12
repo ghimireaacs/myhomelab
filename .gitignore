@@ -32,3 +32,7 @@ Thumbs.db
 myK8S/media/
 docker/ghostmedia/
 docker/jellyfin/
+
+# Not ready for public
+docker/resume-service/
+docker/job-fetcher/CHANGELOG.md

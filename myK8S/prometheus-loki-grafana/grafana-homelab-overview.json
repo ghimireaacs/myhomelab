@@ -107,30 +107,6 @@
         "legendFormat": "CPU %", "refId": "A" }]
     },
 
-    {
-      "id": 5, "type": "stat", "title": "ghostmedia",
-      "gridPos": { "x": 12, "y": 1, "w": 4, "h": 5 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
-        "colorMode": "background", "graphMode": "area", "justifyMode": "center",
-        "text": { "valueSize": 44, "titleSize": 14 }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent", "decimals": 1, "min": 0, "max": 100,
-          "color": { "mode": "thresholds" },
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "#00C853", "value": null },
-            { "color": "#FF6D00", "value": 60 },
-            { "color": "#D50000", "value": 80 }
-          ]}
-        }
-      },
-      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-        "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.115:9100\"}[5m])) * 100)",
-        "legendFormat": "CPU %", "refId": "A" }]
-    },
 
     {
       "id": 6, "type": "stat", "title": "kubeone",
@@ -265,30 +241,6 @@
         "legendFormat": "RAM %", "refId": "A" }]
     },
 
-    {
-      "id": 12, "type": "stat", "title": "ghostmedia",
-      "gridPos": { "x": 12, "y": 7, "w": 4, "h": 5 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
-        "colorMode": "background", "graphMode": "area", "justifyMode": "center",
-        "text": { "valueSize": 44, "titleSize": 14 }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent", "decimals": 1, "min": 0, "max": 100,
-          "color": { "mode": "thresholds" },
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "#00BFA5", "value": null },
-            { "color": "#FFAB00", "value": 70 },
-            { "color": "#DD2C00", "value": 85 }
-          ]}
-        }
-      },
-      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-        "expr": "100 - (node_memory_MemAvailable_bytes{instance=\"10.10.10.115:9100\"} / node_memory_MemTotal_bytes{instance=\"10.10.10.115:9100\"} * 100)",
-        "legendFormat": "RAM %", "refId": "A" }]
-    },
 
     {
       "id": 13, "type": "stat", "title": "kubeone",
@@ -379,8 +331,6 @@
             "properties": [{ "id": "color", "value": { "fixedColor": "#00E676", "mode": "fixed" } }] },
           { "matcher": { "id": "byName", "options": "utility" },
             "properties": [{ "id": "color", "value": { "fixedColor": "#2979FF", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "ghostmedia" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#D500F9", "mode": "fixed" } }] },
           { "matcher": { "id": "byName", "options": "kubeone" },
             "properties": [{ "id": "color", "value": { "fixedColor": "#FF9100", "mode": "fixed" } }] },
           { "matcher": { "id": "byName", "options": "kubetwo" },
@@ -397,9 +347,6 @@
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.114:9100\"}[5m])) * 100)",
           "legendFormat": "utility", "refId": "C" },
-        { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.115:9100\"}[5m])) * 100)",
-          "legendFormat": "ghostmedia", "refId": "D" },
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.100:9100\"}[5m])) * 100)",
           "legendFormat": "kubeone", "refId": "E" },
@@ -438,8 +385,6 @@
           { "matcher": { "id": "byName", "options": "nextcloud ↓" },  "properties": [{ "id": "color", "value": { "fixedColor": "#69F0AE", "mode": "fixed" } }] },
           { "matcher": { "id": "byName", "options": "utility ↑" },    "properties": [{ "id": "color", "value": { "fixedColor": "#2979FF", "mode": "fixed" } }] },
           { "matcher": { "id": "byName", "options": "utility ↓" },    "properties": [{ "id": "color", "value": { "fixedColor": "#82B1FF", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "ghostmedia ↑" }, "properties": [{ "id": "color", "value": { "fixedColor": "#D500F9", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "ghostmedia ↓" }, "properties": [{ "id": "color", "value": { "fixedColor": "#EA80FC", "mode": "fixed" } }] },
           { "matcher": { "id": "byName", "options": "kubeone ↑" },    "properties": [{ "id": "color", "value": { "fixedColor": "#FF9100", "mode": "fixed" } }] },
           { "matcher": { "id": "byName", "options": "kubeone ↓" },    "properties": [{ "id": "color", "value": { "fixedColor": "#FFD180", "mode": "fixed" } }] },
           { "matcher": { "id": "byName", "options": "kubetwo ↑" },    "properties": [{ "id": "color", "value": { "fixedColor": "#00E5FF", "mode": "fixed" } }] },
@@ -465,12 +410,6 @@
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "sum(rate(node_network_transmit_bytes_total{instance=\"10.10.10.114:9100\", device!=\"lo\"}[5m]))",
           "legendFormat": "utility ↓", "refId": "F" },
-        { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-          "expr": "sum(rate(node_network_receive_bytes_total{instance=\"10.10.10.115:9100\", device!=\"lo\"}[5m]))",
-          "legendFormat": "ghostmedia ↑", "refId": "G" },
-        { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-          "expr": "sum(rate(node_network_transmit_bytes_total{instance=\"10.10.10.115:9100\", device!=\"lo\"}[5m]))",
-          "legendFormat": "ghostmedia ↓", "refId": "H" },
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "sum(rate(node_network_receive_bytes_total{instance=\"10.10.10.100:9100\", device!=\"lo\"}[5m]))",
           "legendFormat": "kubeone ↑", "refId": "I" },
