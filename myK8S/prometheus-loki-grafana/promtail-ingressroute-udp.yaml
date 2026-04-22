@@ -1,12 +1,2 @@
-apiVersion: traefik.io/v1alpha1
-kind: IngressRouteUDP
-metadata:
-  name: promtail-syslog
-  namespace: infra
-spec:
-  entryPoints:
-    - syslog
-  routes:
-    - services:
-        - name: promtail
-          port: 514
+# Removed — syslog-ng now receives OPNsense logs via LoadBalancer service directly.
+# OPNsense → syslog-ng:1514 (MetalLB LoadBalancer) → file → Promtail (file tail) → Loki

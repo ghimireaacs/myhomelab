@@ -66,11 +66,13 @@ spec:
                 secretKeyRef:
                   name: grafana-admin
                   key: ntfy-admin-token
+                  optional: true
             - name: NTFY_IP
               valueFrom:
                 secretKeyRef:
                   name: grafana-admin
                   key: ntfy-ip
+                  optional: true
           volumeMounts:
             - name: grafana-data
               mountPath: /var/lib/grafana
@@ -79,7 +81,9 @@ spec:
             - name: grafana-dashboard-provider
               mountPath: /etc/grafana/provisioning/dashboards
             - name: grafana-dashboard-homelab
-              mountPath: /etc/grafana/dashboards
+              mountPath: /etc/grafana/dashboards/homelab
+            - name: grafana-dashboard-opnsense
+              mountPath: /etc/grafana/dashboards/opnsense
             - name: grafana-alerting
               mountPath: /etc/grafana/provisioning/alerting
       volumes:
@@ -95,6 +99,9 @@ spec:
         - name: grafana-dashboard-homelab
           configMap:
             name: grafana-dashboard-homelab
+        - name: grafana-dashboard-opnsense
+          configMap:
+            name: grafana-dashboard-opnsense
         - name: grafana-alerting
           configMap:
             name: grafana-alerting

@@ -18,449 +18,475 @@
   "title": "Homelab Overview",
   "uid": "homelab-overview",
   "schemaVersion": 38,
-  "version": 4,
+  "version": 5,
   "refresh": "30s",
   "time": { "from": "now-1h", "to": "now" },
   "timezone": "browser",
   "panels": [
 
-    {
-      "id": 1,
-      "type": "row",
-      "title": "CPU Usage",
-      "collapsed": false,
-      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }
-    },
+    { "id": 1, "type": "row", "title": "Physical Hosts", "collapsed": false,
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 } },
 
-    {
-      "id": 2, "type": "stat", "title": "ghostgpu",
-      "gridPos": { "x": 0, "y": 1, "w": 4, "h": 5 },
+    { "id": 2, "type": "stat", "title": "homeserver — CPU",
+      "gridPos": { "x": 0, "y": 1, "w": 8, "h": 5 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
         "colorMode": "background", "graphMode": "area", "justifyMode": "center",
-        "text": { "valueSize": 44, "titleSize": 14 }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent", "decimals": 1, "min": 0, "max": 100,
-          "color": { "mode": "thresholds" },
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "#00C853", "value": null },
-            { "color": "#FF6D00", "value": 60 },
-            { "color": "#D50000", "value": 80 }
-          ]}
-        }
-      },
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00C853", "value": null }, { "color": "#FF6D00", "value": 60 }, { "color": "#D50000", "value": 80 }
+        ]} } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.150:9100\"}[5m])) * 100)",
+        "legendFormat": "CPU %", "refId": "A" }] },
+
+    { "id": 3, "type": "stat", "title": "homeservertoo — CPU",
+      "gridPos": { "x": 8, "y": 1, "w": 8, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+        "colorMode": "background", "graphMode": "area", "justifyMode": "center",
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00C853", "value": null }, { "color": "#FF6D00", "value": 60 }, { "color": "#D50000", "value": 80 }
+        ]} } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.151:9100\"}[5m])) * 100)",
+        "legendFormat": "CPU %", "refId": "A" }] },
+
+    { "id": 4, "type": "stat", "title": "kuber — CPU",
+      "gridPos": { "x": 16, "y": 1, "w": 8, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+        "colorMode": "background", "graphMode": "area", "justifyMode": "center",
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00C853", "value": null }, { "color": "#FF6D00", "value": 60 }, { "color": "#D50000", "value": 80 }
+        ]} } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.99:9100\"}[5m])) * 100)",
+        "legendFormat": "CPU %", "refId": "A" }] },
+
+    { "id": 5, "type": "stat", "title": "homeserver — RAM",
+      "gridPos": { "x": 0, "y": 6, "w": 8, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+        "colorMode": "background", "graphMode": "area", "justifyMode": "center",
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00BFA5", "value": null }, { "color": "#FFAB00", "value": 70 }, { "color": "#DD2C00", "value": 85 }
+        ]} } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "100 - (node_memory_MemAvailable_bytes{instance=\"10.10.10.150:9100\"} / node_memory_MemTotal_bytes{instance=\"10.10.10.150:9100\"} * 100)",
+        "legendFormat": "RAM %", "refId": "A" }] },
+
+    { "id": 6, "type": "stat", "title": "homeservertoo — RAM",
+      "gridPos": { "x": 8, "y": 6, "w": 8, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+        "colorMode": "background", "graphMode": "area", "justifyMode": "center",
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00BFA5", "value": null }, { "color": "#FFAB00", "value": 70 }, { "color": "#DD2C00", "value": 85 }
+        ]} } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "100 - (node_memory_MemAvailable_bytes{instance=\"10.10.10.151:9100\"} / node_memory_MemTotal_bytes{instance=\"10.10.10.151:9100\"} * 100)",
+        "legendFormat": "RAM %", "refId": "A" }] },
+
+    { "id": 7, "type": "stat", "title": "kuber — RAM",
+      "gridPos": { "x": 16, "y": 6, "w": 8, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+        "colorMode": "background", "graphMode": "area", "justifyMode": "center",
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00BFA5", "value": null }, { "color": "#FFAB00", "value": 70 }, { "color": "#DD2C00", "value": 85 }
+        ]} } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "100 - (node_memory_MemAvailable_bytes{instance=\"10.10.10.99:9100\"} / node_memory_MemTotal_bytes{instance=\"10.10.10.99:9100\"} * 100)",
+        "legendFormat": "RAM %", "refId": "A" }] },
+
+    { "id": 8, "type": "stat", "title": "homeserver — Temp",
+      "gridPos": { "x": 0, "y": 11, "w": 8, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+        "colorMode": "background", "graphMode": "area", "justifyMode": "center",
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "celsius", "decimals": 1,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00C853", "value": null }, { "color": "#FF6D00", "value": 60 }, { "color": "#D50000", "value": 80 }
+        ]} } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "node_hwmon_temp_celsius{instance=\"10.10.10.150:9100\", chip=\"pci0000:00_0000:00:18_3\", sensor=\"temp1\"}",
+        "legendFormat": "Tctl", "refId": "A" }] },
+
+    { "id": 9, "type": "stat", "title": "homeservertoo — Temp",
+      "gridPos": { "x": 8, "y": 11, "w": 8, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+        "colorMode": "background", "graphMode": "area", "justifyMode": "center",
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "celsius", "decimals": 1,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00C853", "value": null }, { "color": "#FF6D00", "value": 60 }, { "color": "#D50000", "value": 80 }
+        ]} } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "node_hwmon_temp_celsius{instance=\"10.10.10.151:9100\", chip=\"platform_coretemp_0\", sensor=\"temp1\"}",
+        "legendFormat": "Package", "refId": "A" }] },
+
+    { "id": 10, "type": "stat", "title": "kuber — Temp",
+      "gridPos": { "x": 16, "y": 11, "w": 8, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+        "colorMode": "background", "graphMode": "area", "justifyMode": "center",
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "celsius", "decimals": 1,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00C853", "value": null }, { "color": "#FF6D00", "value": 60 }, { "color": "#D50000", "value": 80 }
+        ]} } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "node_hwmon_temp_celsius{instance=\"10.10.10.99:9100\", chip=\"platform_coretemp_0\", sensor=\"temp1\"}",
+        "legendFormat": "Package", "refId": "A" }] },
+
+    { "id": 11, "type": "row", "title": "Virtual Machines", "collapsed": false,
+      "gridPos": { "x": 0, "y": 16, "w": 24, "h": 1 } },
+
+    { "id": 12, "type": "stat", "title": "ghostgpu — CPU",
+      "gridPos": { "x": 0, "y": 17, "w": 6, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+        "colorMode": "background", "graphMode": "area", "justifyMode": "center",
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00C853", "value": null }, { "color": "#FF6D00", "value": 60 }, { "color": "#D50000", "value": 80 }
+        ]} } },
       "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
         "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.111:9100\"}[5m])) * 100)",
-        "legendFormat": "CPU %", "refId": "A" }]
-    },
+        "legendFormat": "CPU %", "refId": "A" }] },
 
-    {
-      "id": 3, "type": "stat", "title": "nextcloud",
-      "gridPos": { "x": 4, "y": 1, "w": 4, "h": 5 },
+    { "id": 13, "type": "stat", "title": "nextcloud — CPU",
+      "gridPos": { "x": 6, "y": 17, "w": 6, "h": 5 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
         "colorMode": "background", "graphMode": "area", "justifyMode": "center",
-        "text": { "valueSize": 44, "titleSize": 14 }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent", "decimals": 1, "min": 0, "max": 100,
-          "color": { "mode": "thresholds" },
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "#00C853", "value": null },
-            { "color": "#FF6D00", "value": 60 },
-            { "color": "#D50000", "value": 80 }
-          ]}
-        }
-      },
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00C853", "value": null }, { "color": "#FF6D00", "value": 60 }, { "color": "#D50000", "value": 80 }
+        ]} } },
       "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
         "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.113:9100\"}[5m])) * 100)",
-        "legendFormat": "CPU %", "refId": "A" }]
-    },
+        "legendFormat": "CPU %", "refId": "A" }] },
 
-    {
-      "id": 4, "type": "stat", "title": "utility",
-      "gridPos": { "x": 8, "y": 1, "w": 4, "h": 5 },
+    { "id": 14, "type": "stat", "title": "utility — CPU",
+      "gridPos": { "x": 12, "y": 17, "w": 6, "h": 5 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
         "colorMode": "background", "graphMode": "area", "justifyMode": "center",
-        "text": { "valueSize": 44, "titleSize": 14 }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent", "decimals": 1, "min": 0, "max": 100,
-          "color": { "mode": "thresholds" },
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "#00C853", "value": null },
-            { "color": "#FF6D00", "value": 60 },
-            { "color": "#D50000", "value": 80 }
-          ]}
-        }
-      },
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00C853", "value": null }, { "color": "#FF6D00", "value": 60 }, { "color": "#D50000", "value": 80 }
+        ]} } },
       "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
         "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.114:9100\"}[5m])) * 100)",
-        "legendFormat": "CPU %", "refId": "A" }]
-    },
+        "legendFormat": "CPU %", "refId": "A" }] },
 
-
-    {
-      "id": 6, "type": "stat", "title": "kubeone",
-      "gridPos": { "x": 16, "y": 1, "w": 4, "h": 5 },
+    { "id": 15, "type": "stat", "title": "homeassistant — CPU",
+      "gridPos": { "x": 18, "y": 17, "w": 6, "h": 5 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
         "colorMode": "background", "graphMode": "area", "justifyMode": "center",
-        "text": { "valueSize": 44, "titleSize": 14 }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent", "decimals": 1, "min": 0, "max": 100,
-          "color": { "mode": "thresholds" },
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "#00C853", "value": null },
-            { "color": "#FF6D00", "value": 60 },
-            { "color": "#D50000", "value": 80 }
-          ]}
-        }
-      },
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00C853", "value": null }, { "color": "#FF6D00", "value": 60 }, { "color": "#D50000", "value": 80 }
+        ]} } },
       "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-        "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.100:9100\"}[5m])) * 100)",
-        "legendFormat": "CPU %", "refId": "A" }]
-    },
+        "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.116:9100\"}[5m])) * 100)",
+        "legendFormat": "CPU %", "refId": "A" }] },
 
-    {
-      "id": 7, "type": "stat", "title": "kubetwo",
-      "gridPos": { "x": 20, "y": 1, "w": 4, "h": 5 },
+    { "id": 16, "type": "stat", "title": "ghostgpu — RAM",
+      "gridPos": { "x": 0, "y": 22, "w": 6, "h": 5 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
         "colorMode": "background", "graphMode": "area", "justifyMode": "center",
-        "text": { "valueSize": 44, "titleSize": 14 }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent", "decimals": 1, "min": 0, "max": 100,
-          "color": { "mode": "thresholds" },
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "#00C853", "value": null },
-            { "color": "#FF6D00", "value": 60 },
-            { "color": "#D50000", "value": 80 }
-          ]}
-        }
-      },
-      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-        "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.101:9100\"}[5m])) * 100)",
-        "legendFormat": "CPU %", "refId": "A" }]
-    },
-
-    {
-      "id": 8,
-      "type": "row",
-      "title": "Memory Usage",
-      "collapsed": false,
-      "gridPos": { "x": 0, "y": 6, "w": 24, "h": 1 }
-    },
-
-    {
-      "id": 9, "type": "stat", "title": "ghostgpu",
-      "gridPos": { "x": 0, "y": 7, "w": 4, "h": 5 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
-        "colorMode": "background", "graphMode": "area", "justifyMode": "center",
-        "text": { "valueSize": 44, "titleSize": 14 }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent", "decimals": 1, "min": 0, "max": 100,
-          "color": { "mode": "thresholds" },
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "#00BFA5", "value": null },
-            { "color": "#FFAB00", "value": 70 },
-            { "color": "#DD2C00", "value": 85 }
-          ]}
-        }
-      },
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00BFA5", "value": null }, { "color": "#FFAB00", "value": 70 }, { "color": "#DD2C00", "value": 85 }
+        ]} } },
       "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
         "expr": "100 - (node_memory_MemAvailable_bytes{instance=\"10.10.10.111:9100\"} / node_memory_MemTotal_bytes{instance=\"10.10.10.111:9100\"} * 100)",
-        "legendFormat": "RAM %", "refId": "A" }]
-    },
+        "legendFormat": "RAM %", "refId": "A" }] },
 
-    {
-      "id": 10, "type": "stat", "title": "nextcloud",
-      "gridPos": { "x": 4, "y": 7, "w": 4, "h": 5 },
+    { "id": 17, "type": "stat", "title": "nextcloud — RAM",
+      "gridPos": { "x": 6, "y": 22, "w": 6, "h": 5 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
         "colorMode": "background", "graphMode": "area", "justifyMode": "center",
-        "text": { "valueSize": 44, "titleSize": 14 }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent", "decimals": 1, "min": 0, "max": 100,
-          "color": { "mode": "thresholds" },
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "#00BFA5", "value": null },
-            { "color": "#FFAB00", "value": 70 },
-            { "color": "#DD2C00", "value": 85 }
-          ]}
-        }
-      },
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00BFA5", "value": null }, { "color": "#FFAB00", "value": 70 }, { "color": "#DD2C00", "value": 85 }
+        ]} } },
       "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
         "expr": "100 - (node_memory_MemAvailable_bytes{instance=\"10.10.10.113:9100\"} / node_memory_MemTotal_bytes{instance=\"10.10.10.113:9100\"} * 100)",
-        "legendFormat": "RAM %", "refId": "A" }]
-    },
+        "legendFormat": "RAM %", "refId": "A" }] },
 
-    {
-      "id": 11, "type": "stat", "title": "utility",
-      "gridPos": { "x": 8, "y": 7, "w": 4, "h": 5 },
+    { "id": 18, "type": "stat", "title": "utility — RAM",
+      "gridPos": { "x": 12, "y": 22, "w": 6, "h": 5 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
         "colorMode": "background", "graphMode": "area", "justifyMode": "center",
-        "text": { "valueSize": 44, "titleSize": 14 }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent", "decimals": 1, "min": 0, "max": 100,
-          "color": { "mode": "thresholds" },
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "#00BFA5", "value": null },
-            { "color": "#FFAB00", "value": 70 },
-            { "color": "#DD2C00", "value": 85 }
-          ]}
-        }
-      },
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00BFA5", "value": null }, { "color": "#FFAB00", "value": 70 }, { "color": "#DD2C00", "value": 85 }
+        ]} } },
       "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
         "expr": "100 - (node_memory_MemAvailable_bytes{instance=\"10.10.10.114:9100\"} / node_memory_MemTotal_bytes{instance=\"10.10.10.114:9100\"} * 100)",
-        "legendFormat": "RAM %", "refId": "A" }]
-    },
+        "legendFormat": "RAM %", "refId": "A" }] },
 
-
-    {
-      "id": 13, "type": "stat", "title": "kubeone",
-      "gridPos": { "x": 16, "y": 7, "w": 4, "h": 5 },
+    { "id": 19, "type": "stat", "title": "homeassistant — RAM",
+      "gridPos": { "x": 18, "y": 22, "w": 6, "h": 5 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
         "colorMode": "background", "graphMode": "area", "justifyMode": "center",
-        "text": { "valueSize": 44, "titleSize": 14 }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent", "decimals": 1, "min": 0, "max": 100,
-          "color": { "mode": "thresholds" },
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "#00BFA5", "value": null },
-            { "color": "#FFAB00", "value": 70 },
-            { "color": "#DD2C00", "value": 85 }
-          ]}
-        }
-      },
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00BFA5", "value": null }, { "color": "#FFAB00", "value": 70 }, { "color": "#DD2C00", "value": 85 }
+        ]} } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "100 - (node_memory_MemAvailable_bytes{instance=\"10.10.10.116:9100\"} / node_memory_MemTotal_bytes{instance=\"10.10.10.116:9100\"} * 100)",
+        "legendFormat": "RAM %", "refId": "A" }] },
+
+    { "id": 20, "type": "row", "title": "k3s Workers", "collapsed": false,
+      "gridPos": { "x": 0, "y": 27, "w": 24, "h": 1 } },
+
+    { "id": 21, "type": "stat", "title": "kubeone — CPU",
+      "gridPos": { "x": 0, "y": 28, "w": 12, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+        "colorMode": "background", "graphMode": "area", "justifyMode": "center",
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00C853", "value": null }, { "color": "#FF6D00", "value": 60 }, { "color": "#D50000", "value": 80 }
+        ]} } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.100:9100\"}[5m])) * 100)",
+        "legendFormat": "CPU %", "refId": "A" }] },
+
+    { "id": 22, "type": "stat", "title": "kubertwo — CPU",
+      "gridPos": { "x": 12, "y": 28, "w": 12, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+        "colorMode": "background", "graphMode": "area", "justifyMode": "center",
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00C853", "value": null }, { "color": "#FF6D00", "value": 60 }, { "color": "#D50000", "value": 80 }
+        ]} } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.101:9100\"}[5m])) * 100)",
+        "legendFormat": "CPU %", "refId": "A" }] },
+
+    { "id": 23, "type": "stat", "title": "kubeone — RAM",
+      "gridPos": { "x": 0, "y": 33, "w": 12, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+        "colorMode": "background", "graphMode": "area", "justifyMode": "center",
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00BFA5", "value": null }, { "color": "#FFAB00", "value": 70 }, { "color": "#DD2C00", "value": 85 }
+        ]} } },
       "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
         "expr": "100 - (node_memory_MemAvailable_bytes{instance=\"10.10.10.100:9100\"} / node_memory_MemTotal_bytes{instance=\"10.10.10.100:9100\"} * 100)",
-        "legendFormat": "RAM %", "refId": "A" }]
-    },
+        "legendFormat": "RAM %", "refId": "A" }] },
 
-    {
-      "id": 14, "type": "stat", "title": "kubetwo",
-      "gridPos": { "x": 20, "y": 7, "w": 4, "h": 5 },
+    { "id": 24, "type": "stat", "title": "kubertwo — RAM",
+      "gridPos": { "x": 12, "y": 33, "w": 12, "h": 5 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto",
         "colorMode": "background", "graphMode": "area", "justifyMode": "center",
-        "text": { "valueSize": 44, "titleSize": 14 }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent", "decimals": 1, "min": 0, "max": 100,
-          "color": { "mode": "thresholds" },
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "#00BFA5", "value": null },
-            { "color": "#FFAB00", "value": 70 },
-            { "color": "#DD2C00", "value": 85 }
-          ]}
-        }
-      },
+        "text": { "valueSize": 44, "titleSize": 14 } },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "min": 0, "max": 100,
+        "color": { "mode": "thresholds" },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "#00BFA5", "value": null }, { "color": "#FFAB00", "value": 70 }, { "color": "#DD2C00", "value": 85 }
+        ]} } },
       "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
         "expr": "100 - (node_memory_MemAvailable_bytes{instance=\"10.10.10.101:9100\"} / node_memory_MemTotal_bytes{instance=\"10.10.10.101:9100\"} * 100)",
-        "legendFormat": "RAM %", "refId": "A" }]
-    },
+        "legendFormat": "RAM %", "refId": "A" }] },
 
-    {
-      "id": 15,
-      "type": "row",
-      "title": "Activity",
-      "collapsed": false,
-      "gridPos": { "x": 0, "y": 12, "w": 24, "h": 1 }
-    },
+    { "id": 25, "type": "row", "title": "Activity", "collapsed": false,
+      "gridPos": { "x": 0, "y": 38, "w": 24, "h": 1 } },
 
-    {
-      "id": 16,
-      "type": "timeseries",
-      "title": "CPU Usage — All Hosts",
-      "gridPos": { "x": 0, "y": 13, "w": 24, "h": 9 },
+    { "id": 26, "type": "timeseries", "title": "CPU Usage — All",
+      "gridPos": { "x": 0, "y": 39, "w": 24, "h": 9 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "options": {
         "tooltip": { "mode": "multi", "sort": "desc" },
         "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max", "mean"] }
       },
       "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "decimals": 1,
-          "custom": {
-            "lineWidth": 3,
-            "fillOpacity": 22,
-            "gradientMode": "opacity",
-            "lineInterpolation": "smooth",
-            "spanNulls": false,
-            "showPoints": "never"
-          },
+        "defaults": { "unit": "percent", "decimals": 1,
+          "custom": { "lineWidth": 2, "fillOpacity": 15, "gradientMode": "opacity",
+            "lineInterpolation": "smooth", "spanNulls": false, "showPoints": "never" },
           "color": { "mode": "fixed", "fixedColor": "#ffffff" }
         },
         "overrides": [
-          { "matcher": { "id": "byName", "options": "ghostgpu" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#FF1744", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "nextcloud" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#00E676", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "utility" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#2979FF", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "kubeone" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#FF9100", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "kubetwo" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#00E5FF", "mode": "fixed" } }] }
+          { "matcher": { "id": "byName", "options": "homeserver" },      "properties": [{ "id": "color", "value": { "fixedColor": "#E040FB", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "homeservertoo" },   "properties": [{ "id": "color", "value": { "fixedColor": "#FF6E40", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "kuber" },           "properties": [{ "id": "color", "value": { "fixedColor": "#EEFF41", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "ghostgpu" },        "properties": [{ "id": "color", "value": { "fixedColor": "#FF1744", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "nextcloud" },       "properties": [{ "id": "color", "value": { "fixedColor": "#00E676", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "utility" },         "properties": [{ "id": "color", "value": { "fixedColor": "#2979FF", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "homeassistant" },   "properties": [{ "id": "color", "value": { "fixedColor": "#00BCD4", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "kubeone" },         "properties": [{ "id": "color", "value": { "fixedColor": "#FF9100", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "kubertwo" },        "properties": [{ "id": "color", "value": { "fixedColor": "#00E5FF", "mode": "fixed" } }] }
         ]
       },
       "targets": [
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.150:9100\"}[5m])) * 100)",
+          "legendFormat": "homeserver", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.151:9100\"}[5m])) * 100)",
+          "legendFormat": "homeservertoo", "refId": "B" },
+        { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.99:9100\"}[5m])) * 100)",
+          "legendFormat": "kuber", "refId": "C" },
+        { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.111:9100\"}[5m])) * 100)",
-          "legendFormat": "ghostgpu", "refId": "A" },
+          "legendFormat": "ghostgpu", "refId": "D" },
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.113:9100\"}[5m])) * 100)",
-          "legendFormat": "nextcloud", "refId": "B" },
+          "legendFormat": "nextcloud", "refId": "E" },
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.114:9100\"}[5m])) * 100)",
-          "legendFormat": "utility", "refId": "C" },
+          "legendFormat": "utility", "refId": "F" },
+        { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.116:9100\"}[5m])) * 100)",
+          "legendFormat": "homeassistant", "refId": "G" },
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.100:9100\"}[5m])) * 100)",
-          "legendFormat": "kubeone", "refId": "E" },
+          "legendFormat": "kubeone", "refId": "H" },
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=\"10.10.10.101:9100\"}[5m])) * 100)",
-          "legendFormat": "kubetwo", "refId": "F" }
-      ]
-    },
+          "legendFormat": "kubertwo", "refId": "I" }
+      ] },
 
-    {
-      "id": 17,
-      "type": "timeseries",
-      "title": "Network Traffic — All Hosts",
-      "gridPos": { "x": 0, "y": 22, "w": 14, "h": 9 },
+    { "id": 27, "type": "timeseries", "title": "Network Traffic — All",
+      "gridPos": { "x": 0, "y": 48, "w": 14, "h": 9 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "options": {
         "tooltip": { "mode": "multi", "sort": "desc" },
         "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull"] }
       },
       "fieldConfig": {
-        "defaults": {
-          "unit": "Bps",
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
-            "lineInterpolation": "smooth",
-            "showPoints": "never"
-          },
+        "defaults": { "unit": "Bps",
+          "custom": { "lineWidth": 2, "fillOpacity": 12, "gradientMode": "opacity",
+            "lineInterpolation": "smooth", "showPoints": "never" },
           "color": { "mode": "fixed", "fixedColor": "#ffffff" }
         },
         "overrides": [
-          { "matcher": { "id": "byName", "options": "ghostgpu ↑" },   "properties": [{ "id": "color", "value": { "fixedColor": "#FF1744", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "ghostgpu ↓" },   "properties": [{ "id": "color", "value": { "fixedColor": "#FF6090", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "nextcloud ↑" },  "properties": [{ "id": "color", "value": { "fixedColor": "#00E676", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "nextcloud ↓" },  "properties": [{ "id": "color", "value": { "fixedColor": "#69F0AE", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "utility ↑" },    "properties": [{ "id": "color", "value": { "fixedColor": "#2979FF", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "utility ↓" },    "properties": [{ "id": "color", "value": { "fixedColor": "#82B1FF", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "kubeone ↑" },    "properties": [{ "id": "color", "value": { "fixedColor": "#FF9100", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "kubeone ↓" },    "properties": [{ "id": "color", "value": { "fixedColor": "#FFD180", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "kubetwo ↑" },    "properties": [{ "id": "color", "value": { "fixedColor": "#00E5FF", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "kubetwo ↓" },    "properties": [{ "id": "color", "value": { "fixedColor": "#84FFFF", "mode": "fixed" } }] }
+          { "matcher": { "id": "byName", "options": "ghostgpu \u2191" },      "properties": [{ "id": "color", "value": { "fixedColor": "#FF1744", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "ghostgpu \u2193" },      "properties": [{ "id": "color", "value": { "fixedColor": "#FF6090", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "nextcloud \u2191" },     "properties": [{ "id": "color", "value": { "fixedColor": "#00E676", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "nextcloud \u2193" },     "properties": [{ "id": "color", "value": { "fixedColor": "#69F0AE", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "utility \u2191" },       "properties": [{ "id": "color", "value": { "fixedColor": "#2979FF", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "utility \u2193" },       "properties": [{ "id": "color", "value": { "fixedColor": "#82B1FF", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "kubeone \u2191" },       "properties": [{ "id": "color", "value": { "fixedColor": "#FF9100", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "kubeone \u2193" },       "properties": [{ "id": "color", "value": { "fixedColor": "#FFD180", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "kubertwo \u2191" },      "properties": [{ "id": "color", "value": { "fixedColor": "#00E5FF", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "kubertwo \u2193" },      "properties": [{ "id": "color", "value": { "fixedColor": "#84FFFF", "mode": "fixed" } }] }
         ]
       },
       "targets": [
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "sum(rate(node_network_receive_bytes_total{instance=\"10.10.10.111:9100\", device!=\"lo\"}[5m]))",
-          "legendFormat": "ghostgpu ↑", "refId": "A" },
+          "legendFormat": "ghostgpu \u2191", "refId": "A" },
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "sum(rate(node_network_transmit_bytes_total{instance=\"10.10.10.111:9100\", device!=\"lo\"}[5m]))",
-          "legendFormat": "ghostgpu ↓", "refId": "B" },
+          "legendFormat": "ghostgpu \u2193", "refId": "B" },
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "sum(rate(node_network_receive_bytes_total{instance=\"10.10.10.113:9100\", device!=\"lo\"}[5m]))",
-          "legendFormat": "nextcloud ↑", "refId": "C" },
+          "legendFormat": "nextcloud \u2191", "refId": "C" },
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "sum(rate(node_network_transmit_bytes_total{instance=\"10.10.10.113:9100\", device!=\"lo\"}[5m]))",
-          "legendFormat": "nextcloud ↓", "refId": "D" },
+          "legendFormat": "nextcloud \u2193", "refId": "D" },
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "sum(rate(node_network_receive_bytes_total{instance=\"10.10.10.114:9100\", device!=\"lo\"}[5m]))",
-          "legendFormat": "utility ↑", "refId": "E" },
+          "legendFormat": "utility \u2191", "refId": "E" },
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "sum(rate(node_network_transmit_bytes_total{instance=\"10.10.10.114:9100\", device!=\"lo\"}[5m]))",
-          "legendFormat": "utility ↓", "refId": "F" },
+          "legendFormat": "utility \u2193", "refId": "F" },
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "sum(rate(node_network_receive_bytes_total{instance=\"10.10.10.100:9100\", device!=\"lo\"}[5m]))",
-          "legendFormat": "kubeone ↑", "refId": "I" },
+          "legendFormat": "kubeone \u2191", "refId": "G" },
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "sum(rate(node_network_transmit_bytes_total{instance=\"10.10.10.100:9100\", device!=\"lo\"}[5m]))",
-          "legendFormat": "kubeone ↓", "refId": "J" },
+          "legendFormat": "kubeone \u2193", "refId": "H" },
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "sum(rate(node_network_receive_bytes_total{instance=\"10.10.10.101:9100\", device!=\"lo\"}[5m]))",
-          "legendFormat": "kubetwo ↑", "refId": "K" },
+          "legendFormat": "kubertwo \u2191", "refId": "I" },
         { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "sum(rate(node_network_transmit_bytes_total{instance=\"10.10.10.101:9100\", device!=\"lo\"}[5m]))",
-          "legendFormat": "kubetwo ↓", "refId": "L" }
-      ]
-    },
+          "legendFormat": "kubertwo \u2193", "refId": "J" }
+      ] },
 
-    {
-      "id": 18,
-      "type": "bargauge",
-      "title": "K8s Pods by Namespace",
-      "gridPos": { "x": 14, "y": 22, "w": 10, "h": 9 },
+    { "id": 28, "type": "bargauge", "title": "K8s Pods by Namespace",
+      "gridPos": { "x": 14, "y": 48, "w": 10, "h": 9 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"] },
-        "orientation": "horizontal",
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "showUnfilled": true,
-        "minVizWidth": 0,
-        "minVizHeight": 10
+        "orientation": "horizontal", "displayMode": "gradient",
+        "valueMode": "color", "showUnfilled": true,
+        "minVizWidth": 0, "minVizHeight": 10
       },
       "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
+        "defaults": { "unit": "short", "min": 0,
           "color": { "mode": "palette-classic" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "#2979FF", "value": null },
-              { "color": "#00E676", "value": 1 },
-              { "color": "#D500F9", "value": 15 }
-            ]
-          }
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "#2979FF", "value": null },
+            { "color": "#00E676", "value": 1 },
+            { "color": "#D500F9", "value": 15 }
+          ]}
         }
       },
-      "targets": [
-        { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-          "expr": "count by (namespace) (kube_pod_info{namespace!=\"\"})",
-          "legendFormat": "{{namespace}}", "instant": true, "refId": "A" }
-      ]
-    }
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "count by (namespace) (kube_pod_info{namespace!=\"\"})",
+        "legendFormat": "{{namespace}}", "instant": true, "refId": "A" }] }
 
   ]
 }
