@@ -61,6 +61,19 @@ spec:
                 secretKeyRef:
                   name: grafana-admin
                   key: oauth-client-secret
+            - name: GF_RENDERING_VIEWPORT_MAX_WIDTH
+              value: "3000"
+            - name: GF_RENDERING_SERVER_URL
+              value: "http://grafana-image-renderer.infra.svc.cluster.local:8081/render"
+            - name: GF_RENDERING_CALLBACK_URL
+              value: "http://grafana.infra.svc.cluster.local:3000/"
+            - name: GF_RENDERING_RENDERER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin
+                  key: renderer-token
+            - name: GF_LOG_FILTERS
+              value: "rendering:debug"
             - name: NTFY_ADMIN_TOKEN
               valueFrom:
                 secretKeyRef:
