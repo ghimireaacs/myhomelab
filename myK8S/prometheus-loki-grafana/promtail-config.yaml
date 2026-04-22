@@ -24,3 +24,11 @@ data:
               job: opnsense
               source: firewall
               __path__: /var/log/opnsense/*.log
+        pipeline_stages:
+          - regex:
+              expression: 'filterlog\[\d+\]: (?:[^,]*,){4}(?P<iface>[^,]+),(?:[^,]+),(?P<action>block|pass|reject),(?P<dir>in|out),(?P<ipver>4|6)(?:(?:,[^,]*){7},(?P<proto>[^,]+))?'
+          - labels:
+              action:
+              dir:
+              iface:
+              proto:

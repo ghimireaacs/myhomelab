@@ -7,7 +7,7 @@ spec:
   selector:
     app: promtail
   ports:
-    - name: syslog
-      port: 514
-      targetPort: 514
-      protocol: UDP
+    - name: http
+      port: 9080
+      targetPort: 9080
+      protocol: TCP

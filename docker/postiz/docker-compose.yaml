@@ -1,0 +1,191 @@
+services:
+  postiz:
+    image: ghcr.io/gitroomhq/postiz-app:latest
+    container_name: postiz
+    restart: unless-stopped
+    ports:
+      - "3300:5000"
+    environment:
+      MAIN_URL: "https://${POSTIZ_SUBDOMAIN}.${DOMAIN_NAME}"
+      FRONTEND_URL: "https://${POSTIZ_SUBDOMAIN}.${DOMAIN_NAME}"
+      NEXT_PUBLIC_BACKEND_URL: "https://${POSTIZ_SUBDOMAIN}.${DOMAIN_NAME}/api"
+      BACKEND_INTERNAL_URL: "http://localhost:3000"
+      JWT_SECRET: "${POSTIZ_JWT_SECRET}"
+      DATABASE_URL: "postgresql://postiz:${POSTIZ_DB_PASSWORD}@postiz-db:5432/postiz"
+      REDIS_URL: "redis://postiz-redis:6379"
+      TEMPORAL_ADDRESS: "temporal:7233"
+      IS_GENERAL: "true"
+      DISABLE_REGISTRATION: "${POSTIZ_DISABLE_REGISTRATION:-true}"
+      RUN_CRON: "true"
+      STORAGE_PROVIDER: "local"
+      UPLOAD_DIRECTORY: "/uploads"
+      NEXT_PUBLIC_UPLOAD_DIRECTORY: "/uploads"
+      API_LIMIT: 30
+      NX_ADD_PLUGINS: "false"
+      TZ: "${TZ}"
+      # Social media API keys — fill in as needed
+      X_API_KEY: "${X_API_KEY:-}"
+      X_API_SECRET: "${X_API_SECRET:-}"
+      LINKEDIN_CLIENT_ID: "${LINKEDIN_CLIENT_ID:-}"
+      LINKEDIN_CLIENT_SECRET: "${LINKEDIN_CLIENT_SECRET:-}"
+      YOUTUBE_CLIENT_ID: "${YOUTUBE_CLIENT_ID:-}"
+      YOUTUBE_CLIENT_SECRET: "${YOUTUBE_CLIENT_SECRET:-}"
+      REDDIT_CLIENT_ID: "${REDDIT_CLIENT_ID:-}"
+      REDDIT_CLIENT_SECRET: "${REDDIT_CLIENT_SECRET:-}"
+      TIKTOK_CLIENT_ID: "${TIKTOK_CLIENT_ID:-}"
+      TIKTOK_CLIENT_SECRET: "${TIKTOK_CLIENT_SECRET:-}"
+      FACEBOOK_APP_ID: "${FACEBOOK_APP_ID:-}"
+      FACEBOOK_APP_SECRET: "${FACEBOOK_APP_SECRET:-}"
+      THREADS_APP_ID: "${THREADS_APP_ID:-}"
+      THREADS_APP_SECRET: "${THREADS_APP_SECRET:-}"
+      # Authentik SSO — flip POSTIZ_GENERIC_OAUTH to "true" and fill client ID/secret in .env to enable
+      NEXT_PUBLIC_POSTIZ_OAUTH_DISPLAY_NAME: "Authentik"
+      NEXT_PUBLIC_POSTIZ_OAUTH_LOGO_URL: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/master/png/authentik.png"
+      POSTIZ_GENERIC_OAUTH: "false"
+      POSTIZ_OAUTH_URL: "https://auth.${DOMAIN_NAME}"
+      POSTIZ_OAUTH_AUTH_URL: "https://auth.${DOMAIN_NAME}/application/o/authorize"
+      POSTIZ_OAUTH_TOKEN_URL: "https://auth.${DOMAIN_NAME}/application/o/token"
+      POSTIZ_OAUTH_USERINFO_URL: "https://auth.${DOMAIN_NAME}/application/o/userinfo"
+      POSTIZ_OAUTH_CLIENT_ID: "${POSTIZ_OAUTH_CLIENT_ID:-}"
+      POSTIZ_OAUTH_CLIENT_SECRET: "${POSTIZ_OAUTH_CLIENT_SECRET:-}"
+      POSTIZ_OAUTH_SCOPE: "openid profile email"
+    volumes:
+      - ${POSTIZ_CONFIG_PATH}:/config/
+      - ${POSTIZ_UPLOADS_PATH}:/uploads/
+    depends_on:
+      postiz-db:
+        condition: service_healthy
+      postiz-redis:
+        condition: service_healthy
+    networks:
+      - postiz-internal
+      - temporal-internal
+      - cloudflare
+
+  postiz-db:
+    image: postgres:17-alpine
+    container_name: postiz-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postiz
+      POSTGRES_USER: postiz
+      POSTGRES_PASSWORD: "${POSTIZ_DB_PASSWORD}"
+    volumes:
+      - ${POSTIZ_DB_PATH}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postiz -d postiz"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - postiz-internal
+
+  postiz-redis:
+    image: redis:7.2
+    container_name: postiz-redis
+    restart: unless-stopped
+    volumes:
+      - ${POSTIZ_REDIS_PATH}:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - postiz-internal
+
+  # --- Temporal stack ---
+
+  temporal:
+    image: temporalio/auto-setup:1.28.1
+    container_name: postiz-temporal
+    restart: unless-stopped
+    ports:
+      - "7233:7233"
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=${POSTIZ_TEMPORAL_DB_PASSWORD}
+      - POSTGRES_SEEDS=postiz-temporal-db
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+      - ENABLE_ES=true
+      - ES_SEEDS=postiz-temporal-es
+      - ES_VERSION=v7
+      - TEMPORAL_NAMESPACE=default
+    volumes:
+      - ./dynamicconfig:/etc/temporal/config/dynamicconfig
+    depends_on:
+      - postiz-temporal-db
+      - postiz-temporal-es
+    networks:
+      - temporal-internal
+
+  postiz-temporal-db:
+    image: postgres:16
+    container_name: postiz-temporal-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: "${POSTIZ_TEMPORAL_DB_PASSWORD}"
+    volumes:
+      - ${POSTIZ_TEMPORAL_DB_PATH}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U temporal"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - temporal-internal
+
+  postiz-temporal-es:
+    image: elasticsearch:7.17.27
+    container_name: postiz-temporal-es
+    restart: unless-stopped
+    environment:
+      - cluster.routing.allocation.disk.threshold_enabled=true
+      - cluster.routing.allocation.disk.watermark.low=512mb
+      - cluster.routing.allocation.disk.watermark.high=256mb
+      - cluster.routing.allocation.disk.watermark.flood_stage=128mb
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms256m -Xmx256m
+      - xpack.security.enabled=false
+    volumes:
+      - ${POSTIZ_ES_PATH}:/usr/share/elasticsearch/data
+    networks:
+      - temporal-internal
+
+  temporal-ui:
+    image: temporalio/ui:2.34.0
+    container_name: postiz-temporal-ui
+    restart: unless-stopped
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    ports:
+      - "8233:8080"
+    depends_on:
+      - temporal
+    networks:
+      - temporal-internal
+
+  temporal-admin-tools:
+    image: temporalio/admin-tools:1.28.1-tctl-1.18.4-cli-1.4.1
+    container_name: postiz-temporal-admin
+    restart: unless-stopped
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CLI_ADDRESS=temporal:7233
+    depends_on:
+      - temporal
+    stdin_open: true
+    tty: true
+    networks:
+      - temporal-internal
+
+networks:
+  postiz-internal:
+  temporal-internal:
+    name: temporal-network
+  cloudflare:
+    external: true

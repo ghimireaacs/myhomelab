@@ -28,7 +28,7 @@ data:
     };
 
     #
-    # Local file (optional but useful)
+    # Local file — Promtail tails this
     #
     destination d_local {
       file(
@@ -39,22 +39,9 @@ data:
     };
 
     #
-    # Forward to Promtail (RFC5424!)
-    #
-    destination d_promtail {
-      syslog(
-        "promtail.infra.svc.cluster.local"
-        transport("udp")
-        port(1514)
-        flags(syslog-protocol)
-      );
-    };
-
-    #
     # Log path
     #
     log {
       source(s_opnsense);
       destination(d_local);
-      destination(d_promtail);
     };

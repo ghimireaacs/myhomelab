@@ -17,7 +17,7 @@ spec:
         - name: syslog-ng
           image: balabit/syslog-ng:latest
           ports:
-            - containerPort: 514
+            - containerPort: 1514
               protocol: UDP
           volumeMounts:
             - name: config

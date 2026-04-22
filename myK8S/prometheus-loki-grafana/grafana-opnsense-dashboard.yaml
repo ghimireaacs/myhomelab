@@ -1,0 +1,344 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-opnsense
+  namespace: infra
+data:
+  opnsense.json: |
+    {
+      "title": "OPNsense Firewall",
+      "uid": "opnsense-firewall",
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "30s",
+      "time": { "from": "now-6h", "to": "now" },
+      "timezone": "browser",
+      "panels": [
+        {
+          "id": 1,
+          "type": "row",
+          "title": "Overview",
+          "collapsed": false,
+          "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "Total Events",
+          "gridPos": { "x": 0, "y": 1, "w": 6, "h": 4 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "options": {
+            "reduceOptions": { "calcs": ["sum"] },
+            "colorMode": "background",
+            "graphMode": "area",
+            "textMode": "auto"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "blue", "value": null }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(count_over_time({job=\"opnsense\"}[$__range]))",
+              "instant": true,
+              "legendFormat": "Total"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "stat",
+          "title": "Blocked",
+          "gridPos": { "x": 6, "y": 1, "w": 6, "h": 4 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "options": {
+            "reduceOptions": { "calcs": ["sum"] },
+            "colorMode": "background",
+            "graphMode": "area",
+            "textMode": "auto"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(count_over_time({job=\"opnsense\", action=\"block\"}[$__range]))",
+              "instant": true,
+              "legendFormat": "Blocked"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "type": "stat",
+          "title": "Passed",
+          "gridPos": { "x": 12, "y": 1, "w": 6, "h": 4 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "options": {
+            "reduceOptions": { "calcs": ["sum"] },
+            "colorMode": "background",
+            "graphMode": "area",
+            "textMode": "auto"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(count_over_time({job=\"opnsense\", action=\"pass\"}[$__range]))",
+              "instant": true,
+              "legendFormat": "Passed"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "type": "stat",
+          "title": "Inbound Blocks",
+          "gridPos": { "x": 18, "y": 1, "w": 6, "h": 4 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "options": {
+            "reduceOptions": { "calcs": ["sum"] },
+            "colorMode": "background",
+            "graphMode": "area",
+            "textMode": "auto"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "orange", "value": null }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(count_over_time({job=\"opnsense\", action=\"block\", dir=\"in\"}[$__range]))",
+              "instant": true,
+              "legendFormat": "Inbound Blocks"
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "type": "row",
+          "title": "Traffic Over Time",
+          "collapsed": false,
+          "gridPos": { "x": 0, "y": 5, "w": 24, "h": 1 }
+        },
+        {
+          "id": 11,
+          "type": "timeseries",
+          "title": "Firewall Events by Action",
+          "gridPos": { "x": 0, "y": 6, "w": 24, "h": 8 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "options": {
+            "tooltip": { "mode": "multi" },
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "fieldConfig": {
+            "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 10 } },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "block" },
+                "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+              },
+              {
+                "matcher": { "id": "byName", "options": "pass" },
+                "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "expr": "sum by (action) (count_over_time({job=\"opnsense\", action=~\"block|pass\"}[$__interval]))",
+              "legendFormat": "{{action}}"
+            }
+          ]
+        },
+        {
+          "id": 20,
+          "type": "row",
+          "title": "Breakdown",
+          "collapsed": false,
+          "gridPos": { "x": 0, "y": 14, "w": 24, "h": 1 }
+        },
+        {
+          "id": 21,
+          "type": "piechart",
+          "title": "By Protocol",
+          "gridPos": { "x": 0, "y": 15, "w": 8, "h": 8 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "options": {
+            "pieType": "pie",
+            "legend": { "displayMode": "list", "placement": "bottom" },
+            "tooltip": { "mode": "single" }
+          },
+          "targets": [
+            {
+              "expr": "sum by (proto) (count_over_time({job=\"opnsense\", proto=~\".+\"}[$__range]))",
+              "instant": true,
+              "legendFormat": "{{proto}}"
+            }
+          ]
+        },
+        {
+          "id": 22,
+          "type": "piechart",
+          "title": "By Interface",
+          "gridPos": { "x": 8, "y": 15, "w": 8, "h": 8 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "options": {
+            "pieType": "pie",
+            "legend": { "displayMode": "list", "placement": "bottom" },
+            "tooltip": { "mode": "single" }
+          },
+          "targets": [
+            {
+              "expr": "sum by (iface) (count_over_time({job=\"opnsense\", iface=~\".+\"}[$__range]))",
+              "instant": true,
+              "legendFormat": "{{iface}}"
+            }
+          ]
+        },
+        {
+          "id": 23,
+          "type": "piechart",
+          "title": "By Direction",
+          "gridPos": { "x": 16, "y": 15, "w": 8, "h": 8 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "options": {
+            "pieType": "pie",
+            "legend": { "displayMode": "list", "placement": "bottom" },
+            "tooltip": { "mode": "single" }
+          },
+          "targets": [
+            {
+              "expr": "sum by (dir) (count_over_time({job=\"opnsense\", dir=~\".+\"}[$__range]))",
+              "instant": true,
+              "legendFormat": "{{dir}}"
+            }
+          ]
+        },
+        {
+          "id": 30,
+          "type": "row",
+          "title": "Blocked Traffic Detail",
+          "collapsed": false,
+          "gridPos": { "x": 0, "y": 23, "w": 24, "h": 1 }
+        },
+        {
+          "id": 31,
+          "type": "timeseries",
+          "title": "Blocked by Protocol",
+          "gridPos": { "x": 0, "y": 24, "w": 12, "h": 7 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "options": {
+            "tooltip": { "mode": "multi" },
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "fieldConfig": {
+            "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 10 } }
+          },
+          "targets": [
+            {
+              "expr": "sum by (proto) (count_over_time({job=\"opnsense\", action=\"block\", proto=~\".+\"}[$__interval]))",
+              "legendFormat": "{{proto}}"
+            }
+          ]
+        },
+        {
+          "id": 32,
+          "type": "timeseries",
+          "title": "Blocked by Interface",
+          "gridPos": { "x": 12, "y": 24, "w": 12, "h": 7 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "options": {
+            "tooltip": { "mode": "multi" },
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "fieldConfig": {
+            "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 10 } }
+          },
+          "targets": [
+            {
+              "expr": "sum by (iface) (count_over_time({job=\"opnsense\", action=\"block\", iface=~\".+\"}[$__interval]))",
+              "legendFormat": "{{iface}}"
+            }
+          ]
+        },
+        {
+          "id": 40,
+          "type": "row",
+          "title": "Live Logs",
+          "collapsed": false,
+          "gridPos": { "x": 0, "y": 31, "w": 24, "h": 1 }
+        },
+        {
+          "id": 41,
+          "type": "logs",
+          "title": "Recent Blocked Events",
+          "gridPos": { "x": 0, "y": 32, "w": 24, "h": 10 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "options": {
+            "dedupStrategy": "none",
+            "showLabels": true,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": false
+          },
+          "targets": [
+            {
+              "expr": "{job=\"opnsense\", action=\"block\"} |= \"filterlog\"",
+              "legendFormat": ""
+            }
+          ]
+        },
+        {
+          "id": 42,
+          "type": "logs",
+          "title": "All OPNsense Logs",
+          "gridPos": { "x": 0, "y": 42, "w": 24, "h": 10 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "options": {
+            "dedupStrategy": "none",
+            "showLabels": true,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": false
+          },
+          "targets": [
+            {
+              "expr": "{job=\"opnsense\"}",
+              "legendFormat": ""
+            }
+          ]
+        }
+      ]
+    }
