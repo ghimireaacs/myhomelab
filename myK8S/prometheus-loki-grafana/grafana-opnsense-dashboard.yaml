@@ -198,12 +198,12 @@ data:
           "options": {
             "pieType": "pie",
             "legend": { "displayMode": "list", "placement": "bottom" },
-            "tooltip": { "mode": "single" }
+            "tooltip": { "mode": "single" },
+            "reduceOptions": { "calcs": ["sum"] }
           },
           "targets": [
             {
-              "expr": "sum by (proto) (count_over_time({job=\"opnsense\", proto=~\".+\"}[$__range]))",
-              "instant": true,
+              "expr": "sum by (proto) (count_over_time({job=\"opnsense\", proto=~\".+\"}[$__interval]))",
               "legendFormat": "{{proto}}"
             }
           ]
@@ -217,12 +217,12 @@ data:
           "options": {
             "pieType": "pie",
             "legend": { "displayMode": "list", "placement": "bottom" },
-            "tooltip": { "mode": "single" }
+            "tooltip": { "mode": "single" },
+            "reduceOptions": { "calcs": ["sum"] }
           },
           "targets": [
             {
-              "expr": "sum by (iface) (count_over_time({job=\"opnsense\", iface=~\".+\"}[$__range]))",
-              "instant": true,
+              "expr": "sum by (iface) (count_over_time({job=\"opnsense\", iface=~\".+\"}[$__interval]))",
               "legendFormat": "{{iface}}"
             }
           ]
@@ -236,12 +236,12 @@ data:
           "options": {
             "pieType": "pie",
             "legend": { "displayMode": "list", "placement": "bottom" },
-            "tooltip": { "mode": "single" }
+            "tooltip": { "mode": "single" },
+            "reduceOptions": { "calcs": ["sum"] }
           },
           "targets": [
             {
-              "expr": "sum by (dir) (count_over_time({job=\"opnsense\", dir=~\".+\"}[$__range]))",
-              "instant": true,
+              "expr": "sum by (dir) (count_over_time({job=\"opnsense\", dir=~\".+\"}[$__interval]))",
               "legendFormat": "{{dir}}"
             }
           ]
