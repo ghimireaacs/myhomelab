@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graphite
+  namespace: infra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: graphite
+  template:
+    metadata:
+      labels:
+        app: graphite
+    spec:
+      containers:
+        - name: graphite
+          image: sitespeedio/graphite:1.1.10-3
+          ports:
+            - containerPort: 2003
+              name: plaintext
+            - containerPort: 80
+              name: http
+          volumeMounts:
+            - name: graphite-data
+              mountPath: /opt/graphite/storage
+      volumes:
+        - name: graphite-data
+          persistentVolumeClaim:
+            claimName: graphite-pvc

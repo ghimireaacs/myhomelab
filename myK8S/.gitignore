@@ -31,6 +31,7 @@ kubectl.kubeconfig
 ## LOCAL
 values.local.yaml
 overrides.local.yaml
+actual-budget/actual-budget-sync-cronjob.yaml
 	
 ## Terraform
 

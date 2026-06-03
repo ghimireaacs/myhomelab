@@ -1,0 +1,276 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-sitespeed
+  namespace: infra
+data:
+  sitespeed.json: |
+    {
+      "title": "ashishghimire.com - Performance",
+      "uid": "sitespeed-blog",
+      "schemaVersion": 38,
+      "version": 6,
+      "refresh": "1h",
+      "time": { "from": "now-30d", "to": "now" },
+      "timezone": "browser",
+      "panels": [
+        {
+          "id": 1,
+          "type": "row",
+          "title": "Latest Run",
+          "collapsed": false,
+          "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "TBT",
+          "gridPos": { "x": 0, "y": 1, "w": 6, "h": 4 },
+          "datasource": { "type": "graphite", "uid": "graphite" },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "graphMode": "none",
+            "textMode": "auto",
+            "justifyMode": "center",
+            "text": { "valueSize": 34, "titleSize": 12 }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "decimals": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "#00C853", "value": null },
+                  { "color": "#FF6D00", "value": 200 },
+                  { "color": "#D50000", "value": 600 }
+                ]
+              }
+            }
+          },
+          "targets": [{
+            "datasource": { "type": "graphite", "uid": "graphite" },
+            "target": "alias(sitespeed_io.default.summary.ashishghimire_com.chrome.native.browsertime.cpu.longTasks.totalBlockingTime.median, 'TBT')",
+            "refId": "A"
+          }]
+        },
+        {
+          "id": 3,
+          "type": "stat",
+          "title": "Max Potential FID",
+          "gridPos": { "x": 6, "y": 1, "w": 6, "h": 4 },
+          "datasource": { "type": "graphite", "uid": "graphite" },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "graphMode": "none",
+            "textMode": "auto",
+            "justifyMode": "center",
+            "text": { "valueSize": 34, "titleSize": 12 }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "decimals": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "#00C853", "value": null },
+                  { "color": "#FF6D00", "value": 100 },
+                  { "color": "#D50000", "value": 300 }
+                ]
+              }
+            }
+          },
+          "targets": [{
+            "datasource": { "type": "graphite", "uid": "graphite" },
+            "target": "alias(sitespeed_io.default.summary.ashishghimire_com.chrome.native.browsertime.cpu.longTasks.maxPotentialFid.median, 'Max Potential FID')",
+            "refId": "A"
+          }]
+        },
+        {
+          "id": 4,
+          "type": "stat",
+          "title": "Long Tasks",
+          "gridPos": { "x": 12, "y": 1, "w": 6, "h": 4 },
+          "datasource": { "type": "graphite", "uid": "graphite" },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "graphMode": "none",
+            "textMode": "auto",
+            "justifyMode": "center",
+            "text": { "valueSize": 34, "titleSize": 12 }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "decimals": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "#00C853", "value": null },
+                  { "color": "#FF6D00", "value": 5 },
+                  { "color": "#D50000", "value": 15 }
+                ]
+              }
+            }
+          },
+          "targets": [{
+            "datasource": { "type": "graphite", "uid": "graphite" },
+            "target": "alias(sitespeed_io.default.summary.ashishghimire_com.chrome.native.browsertime.cpu.longTasks.tasks.median, 'Long Tasks')",
+            "refId": "A"
+          }]
+        },
+        {
+          "id": 5,
+          "type": "stat",
+          "title": "Visual Complete 95",
+          "gridPos": { "x": 18, "y": 1, "w": 6, "h": 4 },
+          "datasource": { "type": "graphite", "uid": "graphite" },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "graphMode": "none",
+            "textMode": "auto",
+            "justifyMode": "center",
+            "text": { "valueSize": 34, "titleSize": 12 }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "decimals": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "#00C853", "value": null },
+                  { "color": "#FF6D00", "value": 2500 },
+                  { "color": "#D50000", "value": 4000 }
+                ]
+              }
+            }
+          },
+          "targets": [{
+            "datasource": { "type": "graphite", "uid": "graphite" },
+            "target": "alias(sitespeed_io.default.summary.ashishghimire_com.chrome.native.browsertime.visualMetrics.VisualComplete95.median, 'Visual Complete 95')",
+            "refId": "A"
+          }]
+        },
+        {
+          "id": 6,
+          "type": "row",
+          "title": "Trends",
+          "collapsed": false,
+          "gridPos": { "x": 0, "y": 5, "w": 24, "h": 1 }
+        },
+        {
+          "id": 7,
+          "type": "timeseries",
+          "title": "Visual Metrics Over Time",
+          "gridPos": { "x": 0, "y": 6, "w": 14, "h": 9 },
+          "datasource": { "type": "graphite", "uid": "graphite" },
+          "options": {
+            "tooltip": { "mode": "multi", "sort": "desc" },
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": ["lastNotNull", "min", "mean"]
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "opacity",
+                "lineInterpolation": "smooth",
+                "showPoints": "always",
+                "pointSize": 5
+              }
+            }
+          },
+          "targets": [
+            {
+              "datasource": { "type": "graphite", "uid": "graphite" },
+              "target": "alias(sitespeed_io.default.summary.ashishghimire_com.chrome.native.browsertime.visualMetrics.VisualComplete85.median, 'Visual Complete 85')",
+              "refId": "A"
+            },
+            {
+              "datasource": { "type": "graphite", "uid": "graphite" },
+              "target": "alias(sitespeed_io.default.summary.ashishghimire_com.chrome.native.browsertime.visualMetrics.VisualComplete95.median, 'Visual Complete 95')",
+              "refId": "B"
+            },
+            {
+              "datasource": { "type": "graphite", "uid": "graphite" },
+              "target": "alias(sitespeed_io.default.summary.ashishghimire_com.chrome.native.browsertime.visualMetrics.VisualComplete99.median, 'Visual Complete 99')",
+              "refId": "C"
+            },
+            {
+              "datasource": { "type": "graphite", "uid": "graphite" },
+              "target": "alias(sitespeed_io.default.summary.ashishghimire_com.chrome.native.browsertime.visualMetrics.VisualReadiness.p90, 'Visual Readiness p90')",
+              "refId": "D"
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "type": "timeseries",
+          "title": "Long Tasks Over Time",
+          "gridPos": { "x": 14, "y": 6, "w": 10, "h": 9 },
+          "datasource": { "type": "graphite", "uid": "graphite" },
+          "options": {
+            "tooltip": { "mode": "multi", "sort": "desc" },
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": ["lastNotNull", "min", "mean"]
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 15,
+                "gradientMode": "opacity",
+                "lineInterpolation": "smooth",
+                "showPoints": "always",
+                "pointSize": 5
+              }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Long Tasks" },
+                "properties": [
+                  { "id": "unit", "value": "short" }
+                ]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "datasource": { "type": "graphite", "uid": "graphite" },
+              "target": "alias(sitespeed_io.default.summary.ashishghimire_com.chrome.native.browsertime.cpu.longTasks.totalBlockingTime.median, 'TBT')",
+              "refId": "A"
+            },
+            {
+              "datasource": { "type": "graphite", "uid": "graphite" },
+              "target": "alias(sitespeed_io.default.summary.ashishghimire_com.chrome.native.browsertime.cpu.longTasks.totalDuration.median, 'Long Task Duration')",
+              "refId": "B"
+            },
+            {
+              "datasource": { "type": "graphite", "uid": "graphite" },
+              "target": "alias(sitespeed_io.default.summary.ashishghimire_com.chrome.native.browsertime.cpu.longTasks.maxPotentialFid.median, 'Max Potential FID')",
+              "refId": "C"
+            },
+            {
+              "datasource": { "type": "graphite", "uid": "graphite" },
+              "target": "alias(sitespeed_io.default.summary.ashishghimire_com.chrome.native.browsertime.cpu.longTasks.tasks.median, 'Long Tasks')",
+              "refId": "D"
+            }
+          ]
+        }
+      ]
+    }

@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sitespeed
+  namespace: infra
+spec:
+  schedule: "0 6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: sitespeed
+              image: sitespeedio/sitespeed.io:40.4.0
+              args:
+                - https://ashishghimire.com
+                - --outputFolder
+                - /tmp/sitespeed-output
+                - --graphite.host
+                - graphite
+                - --graphite.port
+                - "2003"
+                - --graphite.namespace
+                - sitespeed_io.default
+                - --graphite.messages
+                - pageSummary,summary,run
+              resources:
+                requests:
+                  memory: "512Mi"
+                  cpu: "250m"
+                limits:
+                  memory: "1Gi"
+                  cpu: "1000m"
