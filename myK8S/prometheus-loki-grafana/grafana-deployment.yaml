@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: grafana
-          image: grafana/grafana:latest
+          image: grafana/grafana:${GRAFANA_IMAGE_TAG}
           ports:
             - containerPort: 3000
           env:
@@ -74,6 +74,8 @@ spec:
                   key: renderer-token
             - name: GF_LOG_FILTERS
               value: "rendering:debug"
+            - name: GF_INSTALL_PLUGINS
+              value: "grafana-piechart-panel,marcusolsson-json-datasource,marcusolsson-dynamictext-panel"
             - name: NTFY_ADMIN_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -99,6 +101,8 @@ spec:
               mountPath: /etc/grafana/dashboards/opnsense
             - name: grafana-alerting
               mountPath: /etc/grafana/provisioning/alerting
+            - name: grafana-dashboard-sitespeed
+              mountPath: /etc/grafana/dashboards/sitespeed
       volumes:
         - name: grafana-data
           persistentVolumeClaim:
@@ -118,3 +122,6 @@ spec:
         - name: grafana-alerting
           configMap:
             name: grafana-alerting
+        - name: grafana-dashboard-sitespeed
+          configMap:
+            name: grafana-dashboard-sitespeed

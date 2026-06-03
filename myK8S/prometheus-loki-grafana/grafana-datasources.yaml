@@ -20,3 +20,9 @@ data:
         url: http://loki:3100
         access: proxy
         editable: false
+      - name: Graphite
+        type: graphite
+        uid: graphite
+        url: http://graphite:8080
+        access: proxy
+        editable: false
