@@ -1,6 +1,6 @@
 # Homelab
 
-Everything here runs on hardware under my desk. This isn't a lab for lab's sake — it's the infrastructure I actually depend on daily. My photos, documents, finances, calendar, notes, and code all live here, not in someone else's cloud. Built on Proxmox, k3s, and Docker, managed entirely through code.
+Hardware under my desk running the stuff I actually use day to day. Photos, documents, finances, calendar, notes, code hosting - all of it self-hosted. Built on Proxmox, k3s, and Docker, managed through code.
 
 ![Homelab Architecture](diagrams/homelab-diagram.jpg)
 
@@ -8,21 +8,21 @@ Everything here runs on hardware under my desk. This isn't a lab for lab's sake 
 
 ## What This Replaces
 
-I've progressively de-Googled and moved off SaaS tools where it makes sense. These aren't just running — I use them every day.
+Moved off Google and most SaaS tools over time. Everything in this table I actually use.
 
 | Replaced | With | How I use it |
 |---|---|---|
-| Google Drive | Nextcloud | Primary file sync across all devices. WebDAV for mobile apps. Shared folders for documents. |
-| Google Photos | Immich | All photos backed up automatically from my phone. ML-powered face grouping, search, and albums. |
-| Google Calendar | Radicale | CalDAV server. Calendar and contacts synced across devices via standard protocols. |
-| Cloud Storage | TrueNAS (ZFS mirror) | ~10TB on-prem NAS — NFS backend for every service in this stack. Data stays home. |
-| Notion / Obsidian Publish | Quartz | Internal wiki built from Obsidian notes, served as a static site. Personal knowledge base and runbooks. |
-| Instapaper / Pocket | Wallabag | Read-later service. Articles saved from browser, readable offline. |
-| Feedly | Miniflux | RSS reader. No algorithm, no ads — just feeds I chose. |
-| Dropbox / Resilio | Syncthing | Decentralised peer-to-peer file sync. Used for keeping config and vault files consistent across machines without a central server. |
-| Papertrail / Loggly | Loki + Grafana | All syslog and container logs centralised. Dashboards and alerts for every host. |
-| Mint / YNAB | Actual Budget + UP API | UP bank transactions auto-synced into Actual Budget via a scheduled k8s cronjob. Full budget tracking, zero subscription. |
-| Paperless / manual filing | Paperless-ngx | Physical documents scanned and ingested automatically. OCR'd, tagged, and searchable. Subdirectory-based tagging on ingest. |
+| Google Drive | Nextcloud | File sync on all my devices. WebDAV works with mobile apps. |
+| Google Photos | Immich | Phone backs up automatically. Face grouping and search work well. |
+| Google Calendar | Radicale | CalDAV server. Calendar and contacts sync across devices. |
+| Cloud Storage | TrueNAS (ZFS mirror) | About 10TB usable on-prem. NFS backend for everything in this stack. |
+| Notion / Obsidian Publish | Quartz | My Obsidian notes published as a static wiki site. Used as a personal knowledge base and runbook. |
+| Instapaper / Pocket | Wallabag | Save articles to read later, works offline. |
+| Feedly | Miniflux | RSS reader. No algorithm, just the feeds I picked. |
+| Dropbox / Resilio | Syncthing | P2P file sync between machines. No central server needed. |
+| Papertrail / Loggly | Loki + Grafana | All syslog and container logs in one place. Dashboards and alerts per host. |
+| Mint / YNAB | Actual Budget + UP API | UP bank transactions sync into Actual Budget via a k8s cronjob. Budget tracking with no subscription. |
+| Manual filing | Paperless-ngx | Scanned documents get OCR'd and tagged on ingest. Subfolders become tags automatically. |
 
 ---
 
@@ -45,21 +45,21 @@ I've progressively de-Googled and moved off SaaS tools where it makes sense. The
 
 ## Ansible
 
-Playbooks manage the full VM fleet — Docker hosts and k3s nodes — from a single inventory.
+Playbooks manage the full VM fleet: Docker hosts and k3s nodes: from a single inventory.
 
 **Inventory groups:**
-- `docker_vms` — 5 Docker hosts (ghostgpu, security, nextcloud, utility, ghostmedia)
-- `k3s_workers` — 2 k3s worker nodes
-- `k3s_master` — k3s control plane
-- `linux` — all of the above as a single target
+- `docker_vms`: 5 Docker hosts (ghostgpu, security, nextcloud, utility, ghostmedia)
+- `k3s_workers`: 2 k3s worker nodes
+- `k3s_master`: k3s control plane
+- `linux`: all of the above as a single target
 
 **Playbooks:**
 
 | Playbook | What it does |
 |---|---|
 | `update.yml` | `apt dist-upgrade` + `autoremove` across all Linux hosts. Cleans unused Docker volumes/images. Detects pending reboots and optionally reboots with `do_reboot=true`. |
-| `docker-update.yml` | Iterates every Docker Compose stack and runs `docker compose pull && up -d` — rolling image update across all VMs in one command. |
-| `install-docker.yml` | Idempotent Docker CE installation — adds GPG key, configures apt repo, installs packages, creates docker group, adds user. Run against any new VM with `-e target=<host>`. |
+| `docker-update.yml` | Iterates every Docker Compose stack and runs `docker compose pull && up -d`: rolling image update across all VMs in one command. |
+| `install-docker.yml` | Idempotent Docker CE installation: adds GPG key, configures apt repo, installs packages, creates docker group, adds user. Run against any new VM with `-e target=<host>`. |
 
 **Usage:**
 ```bash
@@ -76,27 +76,27 @@ ansible-playbook -i ansible/inventory.ini ansible/docker-update.yml
 ansible-playbook -i ansible/inventory.ini ansible/install-docker.yml -e target=utility
 ```
 
-Ansible runs are managed via [Semaphore](https://semaphoreui.com) — a self-hosted UI for scheduling and auditing playbook executions.
+Ansible runs are managed via [Semaphore](https://semaphoreui.com): a self-hosted UI for scheduling and auditing playbook executions.
 
 ---
 
 ## Kubernetes (`myK8S/`)
 
-k3s cluster with Traefik disabled at install — replaced with a Helm-managed Traefik deployment for full control over ingress configuration.
+k3s cluster with Traefik disabled at install: replaced with a Helm-managed Traefik deployment for full control over ingress configuration.
 
 ### Identity & Access
 
-**Authentik** — self-hosted identity provider. Handles OIDC and forward-auth for services that support SSO. Deployed via Helm with a dedicated PostgreSQL backend.
+**Authentik**: self-hosted identity provider. Handles OIDC and forward-auth for services that support SSO. Deployed via Helm with a dedicated PostgreSQL backend.
 
-### CI/CD — Forgejo + Forgejo Runner
+### CI/CD: Forgejo + Forgejo Runner
 
-**Forgejo** is the self-hosted Git server — all personal and homelab code lives here, not on GitHub. It runs Forgejo Actions (GitHub Actions-compatible), with a dedicated runner deployed as a k8s pod with Docker-in-Docker support.
+Forgejo is the self-hosted Git server. All personal and homelab code lives here. It runs Forgejo Actions (GitHub Actions-compatible syntax), with a dedicated runner deployed as a k8s pod with Docker-in-Docker.
 
-Pipelines run on push: linting, builds, and deployments triggered automatically. The runner has access to the cluster via in-pod kubeconfig, so k8s manifests can be applied as part of a pipeline without leaving the private network.
+Pipelines trigger on push. The runner has a kubeconfig in-pod so it can apply k8s manifests directly without touching the public internet.
 
 ### Observability Pipeline
 
-Full log and metrics pipeline — every host and container feeds into a central stack:
+Full log and metrics pipeline: every host and container feeds into a central stack:
 
 ```
 Docker hosts / k3s nodes
@@ -112,17 +112,17 @@ Sitespeed.io (scheduled cronjob)
   → Graphite                             → Grafana
 ```
 
-Grafana has custom dashboards, alerting rules, and data sources committed as code (`grafana-dashboards.yaml`, `grafana-alerting.yaml`, `grafana-datasources.yaml`).
+Grafana dashboards, alerting rules, and data sources are all committed as code.
 
 ### Networking & TLS
 
-- **MetalLB** — assigns a static LoadBalancer IP to Traefik on bare metal
-- **cert-manager** — provisions and renews TLS certificates automatically via Let's Encrypt Cloudflare DNS-01 challenge
-- **Cloudflare DNS** — wildcard `*.yourdomain.com` → MetalLB IP → Traefik → service
+- **MetalLB**: assigns a static LoadBalancer IP to Traefik on bare metal
+- **cert-manager**: provisions and renews TLS certificates automatically via Let's Encrypt Cloudflare DNS-01 challenge
+- **Cloudflare DNS**: wildcard `*.yourdomain.com` → MetalLB IP → Traefik → service
 
-External Docker services are exposed through the cluster via `ExternalName` Service stubs — no pods needed, Traefik routes the domain directly to the Docker VM IP.
+Docker services get exposed through the cluster via `ExternalName` stubs. No extra pods, Traefik just routes the domain straight to the Docker VM IP.
 
-### Terraform — VM Provisioning
+### Terraform: VM Provisioning
 
 VMs are provisioned from a cloud-init Debian template using the `telmate/proxmox` Terraform provider. Each VM gets: static IP, SSH key injection, user config, and NFS auto-mount via cloud-init.
 
@@ -198,7 +198,7 @@ No real credentials exist anywhere in this repo. The pattern is consistent acros
 
 ---
 
-## Observability — Every Host Covered Automatically
+## Observability: Every Host Covered Automatically
 
 Every Docker VM is cloned from a base template that auto-starts four containers:
 
@@ -209,7 +209,7 @@ Every Docker VM is cloned from a base template that auto-starts four containers:
 | `node-exporter` | 9100 | Host metrics → Prometheus |
 | `cadvisor` | 8080 | Container metrics → Prometheus |
 
-A new VM is fully observable the moment it boots — no manual configuration.
+A new VM shows up in Portainer, Dozzle, and Prometheus the moment it boots. Nothing to configure.
 
 ---
 
