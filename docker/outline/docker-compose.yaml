@@ -1,0 +1,74 @@
+services:
+  outline:
+    image: outlinewiki/outline:latest
+    container_name: outline
+    restart: always
+    depends_on:
+      outline-postgres:
+        condition: service_healthy
+      outline-redis:
+        condition: service_healthy
+    environment:
+      - URL=https://${SUBDOMAIN}.${DOMAIN_NAME}
+      - PORT=3000
+      - SECRET_KEY=${SECRET_KEY}
+      - UTILS_SECRET=${UTILS_SECRET}
+      - DATABASE_URL=postgres://outline:${OUTLINE_POSTGRES_PASSWORD}@outline-postgres:5432/outline
+      - REDIS_URL=redis://outline-redis:6379
+      - PGSSLMODE=disable
+      - NODE_ENV=production
+      - LOG_LEVEL=warn
+      - FORCE_HTTPS=false
+      - FILE_STORAGE=local
+      - FILE_STORAGE_LOCAL_ROOT_DIR=/var/lib/outline/data
+      - FILE_STORAGE_UPLOAD_MAX_SIZE=26214400
+      # SMTP — required for email magic link auth
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL}
+      - SMTP_REPLY_EMAIL=${SMTP_FROM_EMAIL}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - TZ=${TZ}
+    volumes:
+      - ${OUTLINE_DATA_PATH}:/var/lib/outline/data
+    networks:
+      - cloudflare
+      - outline-internal
+
+  outline-postgres:
+    image: postgres:16-alpine
+    container_name: outline-postgres
+    restart: always
+    environment:
+      - POSTGRES_DB=outline
+      - POSTGRES_USER=outline
+      - POSTGRES_PASSWORD=${OUTLINE_POSTGRES_PASSWORD}
+    volumes:
+      - ${OUTLINE_POSTGRES_PATH}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U outline -d outline"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - outline-internal
+
+  outline-redis:
+    image: redis:7-alpine
+    container_name: outline-redis
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - outline-internal
+
+networks:
+  cloudflare:
+    external: true
+  outline-internal:
+    driver: bridge
