@@ -15,7 +15,13 @@ spec:
     spec:
       containers:
         - name: vikunja
-          image: vikunja/vikunja:latest
+          image: vikunja/vikunja:2.3.0
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
           ports:
             - containerPort: 3456
           env:

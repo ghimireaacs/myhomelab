@@ -16,6 +16,12 @@ spec:
       containers:
         - name: trilium
           image: triliumnext/trilium:latest
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              memory: 384Mi
           ports:
             - containerPort: 8080
           env:

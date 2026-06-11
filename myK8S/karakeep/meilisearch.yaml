@@ -16,6 +16,12 @@ spec:
       containers:
       - name: meilisearch
         image: getmeili/meilisearch:v1.11.1
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            memory: 768Mi
         env:
         - name: MEILI_NO_ANALYTICS
           value: "true"

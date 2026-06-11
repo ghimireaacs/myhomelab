@@ -16,6 +16,12 @@ spec:
       containers:
         - name: ytdl
           image: nbr23/youtube-dl-server:latest
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
           ports:
             - containerPort: 8080
           volumeMounts:

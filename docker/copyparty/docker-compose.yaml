@@ -2,6 +2,7 @@ services:
   copyparty:
     image: copyparty/ac:latest
     container_name: copyparty
+    restart: unless-stopped
     user: "3000:3000"
     ports:
       - 3923:3923

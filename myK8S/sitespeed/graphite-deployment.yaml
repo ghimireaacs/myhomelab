@@ -16,6 +16,12 @@ spec:
       containers:
         - name: graphite
           image: sitespeedio/graphite:1.1.10-3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 192Mi
+            limits:
+              memory: 512Mi
           ports:
             - containerPort: 2003
               name: plaintext
