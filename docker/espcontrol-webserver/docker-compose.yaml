@@ -1,0 +1,9 @@
+services:
+  espcontrol-webserver:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "8182:80"
+    volumes:
+      - "/home/ghost/ghostsilo/99_System/Claude Codes/gitClones/espcontrol/docs/public/webserver:/usr/share/nginx/html:ro"
+      - "./nginx.conf:/etc/nginx/conf.d/default.conf:ro"

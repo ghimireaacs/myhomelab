@@ -16,6 +16,12 @@ spec:
       containers:
         - name: actual-budget
           image: actualbudget/actual-server:latest
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
           imagePullPolicy: Always
           ports:
             - containerPort: 5006

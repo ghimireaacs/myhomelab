@@ -18,6 +18,12 @@ spec:
       containers:
         - name: wiki
           image: git.560384.xyz/ashishghimire/mydocs:latest
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 256Mi
           imagePullPolicy: Always
           ports:
             - containerPort: 80

@@ -48,7 +48,7 @@ Moved off Google and most SaaS tools over time. Everything in this table I actua
 Playbooks manage the full VM fleet: Docker hosts and k3s nodes: from a single inventory.
 
 **Inventory groups:**
-- `docker_vms`: 5 Docker hosts (ghostgpu, security, nextcloud, utility, ghostmedia)
+- `docker_vms`: 3 Docker hosts (ghostgpu, nextcloud, utility)
 - `k3s_workers`: 2 k3s worker nodes
 - `k3s_master`: k3s control plane
 - `linux`: all of the above as a single target

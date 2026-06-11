@@ -17,6 +17,12 @@ spec:
       containers:
         - name: postgres
           image: postgres:16
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 512Mi
           envFrom:
             - secretRef:
                 name: paperless-secrets
@@ -47,6 +53,12 @@ spec:
       containers:
         - name: redis
           image: redis:7
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 256Mi
           volumeMounts:
             - name: system
               mountPath: /data
@@ -74,6 +86,12 @@ spec:
       containers:
         - name: gotenberg
           image: gotenberg/gotenberg:8
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 512Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -93,6 +111,12 @@ spec:
       containers:
         - name: tika
           image: apache/tika:latest
+          resources:
+            requests:
+              cpu: 25m
+              memory: 256Mi
+            limits:
+              memory: 768Mi
           env:
             - name: JAVA_TOOL_OPTIONS
               value: "-Xmx128m -Xms64m"

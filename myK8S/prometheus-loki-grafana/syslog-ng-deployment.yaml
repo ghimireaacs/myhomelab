@@ -16,6 +16,12 @@ spec:
       containers:
         - name: syslog-ng
           image: balabit/syslog-ng:latest
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
           ports:
             - containerPort: 1514
               protocol: UDP

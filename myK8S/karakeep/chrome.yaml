@@ -16,6 +16,12 @@ spec:
       containers:
       - name: chrome
         image: gcr.io/zenika-hub/alpine-chrome:124
+        resources:
+          requests:
+            cpu: 50m
+            memory: 192Mi
+          limits:
+            memory: 1Gi
         args:
         - --headless
         - --no-sandbox

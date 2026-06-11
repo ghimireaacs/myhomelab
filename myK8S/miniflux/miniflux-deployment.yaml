@@ -20,6 +20,12 @@ spec:
       containers:
         - name: miniflux
           image: miniflux/miniflux:latest
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
           ports:
             - containerPort: 8080
           env:

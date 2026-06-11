@@ -16,6 +16,12 @@ spec:
       containers:
         - name: glance
           image: glanceapp/glance:latest
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
           ports:
             - containerPort: 8080
           env:

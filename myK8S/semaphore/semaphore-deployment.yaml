@@ -20,6 +20,12 @@ spec:
       containers:
         - name: semaphore
           image: semaphoreui/semaphore:latest
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 512Mi
           ports:
             - containerPort: 3000
           env:

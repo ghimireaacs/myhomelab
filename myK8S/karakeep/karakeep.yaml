@@ -16,6 +16,12 @@ spec:
       containers:
       - name: karakeep
         image: ghcr.io/karakeep-app/karakeep:latest
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 1536Mi
         ports:
         - containerPort: 3000
         env:
