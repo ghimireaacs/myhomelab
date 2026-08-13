@@ -1,0 +1,74 @@
+---
+# Bring up application stacks from the repo.
+#
+#   ansible-playbook deploy.yml --limit utility
+#   ansible-playbook deploy.yml --limit utility -e stack=mattermost
+#
+# Differs from docker-update.yml in intent: that one refreshes what is already
+# running, this one stands services up on a host that has none.
+#
+# Stacks are skipped when their .env is missing rather than started with
+# defaults, because a service that comes up with the wrong credentials and
+# initialises an empty database is harder to recover from than one that never
+# started. Secrets live on TrueNAS, not in git — restore them first.
+
+- name: Deploy Docker stacks
+  hosts: docker_vms
+  become: false
+  gather_facts: false
+
+  tasks:
+    - name: Collect candidate stacks
+      ansible.builtin.shell:
+        # -printf '%h' yields the containing directory directly. Do not pipe
+        # through `xargs dirname` — the repo path contains a space, and xargs
+        # would split it into two bogus paths.
+        cmd: >-
+          { for d in {{ compose_search_dirs | map('quote') | join(' ') }}; do
+              find "$d" -maxdepth 2 \( -name docker-compose.yaml -o -name docker-compose.yml -o -name compose.yml \) -printf '%h\n' 2>/dev/null;
+            done;
+            for s in {{ compose_extra_stacks | map('quote') | join(' ') }}; do
+              find "$s" -maxdepth 1 \( -name docker-compose.yaml -o -name docker-compose.yml -o -name compose.yml \) -printf '%h\n' 2>/dev/null;
+            done; }
+          | sort -u
+          {% if stack is defined %}| grep -E '/{{ stack }}$'{% endif %}
+        executable: /bin/bash
+      register: candidates
+      changed_when: false
+
+    - name: Determine which stacks have their secrets in place
+      ansible.builtin.shell:
+        cmd: >-
+          if ls {{ item | quote }}/.env* >/dev/null 2>&1
+             || ! grep -qE '\$\{[A-Z_]+\}|env_file' {{ item | quote }}/*compose*y*ml 2>/dev/null; then
+            echo ready
+          else
+            echo missing-env
+          fi
+        executable: /bin/bash
+      loop: "{{ candidates.stdout_lines | default([]) }}"
+      register: readiness
+      changed_when: false
+
+    - name: Start the ready stacks
+      ansible.builtin.shell:
+        cmd: docker compose up -d
+        chdir: "{{ item.item }}"
+      loop: "{{ readiness.results | default([]) | selectattr('stdout', 'equalto', 'ready') | list }}"
+      loop_control:
+        label: "{{ item.item | basename }}"
+      register: deployed
+      failed_when: false
+      changed_when: deployed.rc == 0
+
+    - name: List stacks skipped for missing secrets
+      ansible.builtin.debug:
+        msg: >-
+          Skipped (restore .env from {{ backup_root | dirname }} first):
+          {{ readiness.results
+             | default([])
+             | selectattr('stdout', 'equalto', 'missing-env')
+             | map(attribute='item')
+             | map('basename')
+             | list
+             | default(['none'], true) }}

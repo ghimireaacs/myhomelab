@@ -1,111 +1,91 @@
-# ---------------------------------------------------------------------------
-# Provider credentials — set via secrets.tfvars (gitignored)
-# ---------------------------------------------------------------------------
-
 variable "pm_api_url" {
-  description = "Proxmox API URL (e.g. https://homeserver:8006/api2/json)"
+  description = "Proxmox API endpoint, e.g. https://10.0.0.1:8006/api2/json"
   type        = string
 }
 
 variable "pm_api_token_id" {
-  description = "Proxmox API token ID (e.g. terraform@pam!mytoken)"
+  description = "Proxmox API token ID (user@realm!tokenname)"
   type        = string
   sensitive   = true
 }
 
 variable "pm_api_token_secret" {
-  description = "Proxmox API token secret (UUID)"
+  description = "Proxmox API token secret"
   type        = string
   sensitive   = true
 }
 
 variable "pm_tls_insecure" {
-  description = "Skip TLS verification for Proxmox API (set true for self-signed certs)"
+  description = "Skip TLS verification — true for a self-signed Proxmox certificate"
   type        = bool
   default     = true
 }
 
-# ---------------------------------------------------------------------------
-# VM definitions — set via homelab.tfvars (gitignored)
-# ---------------------------------------------------------------------------
-
 variable "vms" {
-  description = "Map of VM name → static IP address"
-  type        = map(string)
-  default     = {}
+  description = <<-EOT
+    VMs to manage, keyed by name. Each VM declares its own hardware, because
+    the fleet is not uniform — sizes range from a 512 MB LXC-scale guest to an
+    8 GB GPU host. Every field except `ip` and `vmid` has a default.
+  EOT
+  type = map(object({
+    vmid        = number
+    ip          = string
+    memory      = optional(number, 4096)
+    cores       = optional(number, 2)
+    disk_size   = optional(string, "32G")
+    target_node = optional(string)
+    template    = optional(string)
+    onboot      = optional(bool, true)
+  }))
 }
 
-# ---------------------------------------------------------------------------
-# Cluster defaults — override per environment in tfvars if needed
-# ---------------------------------------------------------------------------
-
 variable "target_node" {
-  description = "Proxmox node name to deploy VMs on"
+  description = "Default Proxmox node for VMs that do not name one"
   type        = string
   default     = "homeserver"
 }
 
-variable "vmid_start" {
-  description = "Base VMID — VMs are assigned vmid_start + sorted index"
-  type        = number
-  default     = 300
-}
-
 variable "clone_template" {
-  description = "Name of the Proxmox template VM to clone"
+  description = <<-EOT
+    Default template to clone. Use the Ubuntu Docker template — its cloud-init
+    provides the ghost user, the NFS mount and the always-on agent containers
+    that the Ansible playbooks and the rest of the homelab assume.
+  EOT
   type        = string
-  default     = "tf-debian-template"
+  default     = "docker-template"
 }
 
 variable "storage" {
-  description = "Proxmox storage pool for VM disk and cloud-init drive"
+  description = "Proxmox storage pool for VM disks"
   type        = string
-  default     = "wdstorageHDD"
+  default     = "local-lvm"
 }
 
 variable "bridge" {
-  description = "Proxmox network bridge"
+  description = "Network bridge"
   type        = string
   default     = "vmbr0"
 }
 
 variable "gateway" {
-  description = "Default gateway for VM network config (e.g. 192.168.1.1)"
+  description = "Default gateway"
   type        = string
 }
 
 variable "cidr" {
-  description = "Subnet prefix length (e.g. 24 for /24)"
+  description = "Network prefix length"
   type        = number
   default     = 24
 }
 
-variable "memory" {
-  description = "RAM in MB for each VM"
-  type        = number
-  default     = 4096
-}
-
-variable "cores" {
-  description = "vCPU cores per VM"
-  type        = number
-  default     = 2
-}
-
-variable "disk_size" {
-  description = "Root disk size (e.g. '32G')"
-  type        = string
-  default     = "32G"
-}
-
 variable "ciuser" {
-  description = "Cloud-init username"
+  description = "Cloud-init user"
   type        = string
   default     = "ghost"
 }
 
 variable "ssh_pubkey_path" {
-  description = "Path to SSH public key injected via cloud-init"
+  description = "Public key injected via cloud-init"
   type        = string
   default     = "./ssh/bootstrap.pub"
 }

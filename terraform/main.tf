@@ -1,28 +1,28 @@
 locals {
-  # Stable ordering ensures consistent VMID assignment across runs
-  vm_names = sort(keys(var.vms))
-
   bootstrap_ssh_key = trimspace(file(var.ssh_pubkey_path))
 }
 
+# VMIDs are declared per VM rather than derived from an index, so that state
+# matches the machines that already exist and `terraform import` lines up.
 module "vm" {
   source = "./modules/vm"
 
   for_each = var.vms
 
   name        = each.key
-  target_node = var.target_node
-  vmid        = var.vmid_start + index(local.vm_names, each.key)
+  vmid        = each.value.vmid
+  target_node = coalesce(each.value.target_node, var.target_node)
 
-  clone_template = var.clone_template
+  clone_template = coalesce(each.value.template, var.clone_template)
   storage        = var.storage
   bridge         = var.bridge
 
-  memory    = var.memory
-  cores     = var.cores
-  disk_size = var.disk_size
+  memory    = each.value.memory
+  cores     = each.value.cores
+  disk_size = each.value.disk_size
+  onboot    = each.value.onboot
 
-  ip      = each.value
+  ip      = each.value.ip
   cidr    = var.cidr
   gateway = var.gateway
 

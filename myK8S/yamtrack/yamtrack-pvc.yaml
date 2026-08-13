@@ -1,0 +1,14 @@
+# SQLite DB on node-local disk (never NFS — file locking).
+# local-path binds on first pod schedule; deployment nodeSelector pins to kubertwo.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: yamtrack-pvc
+  namespace: personal
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 2Gi

@@ -1,0 +1,218 @@
+---
+# Dump the state that lives on VM and node local disks onto TrueNAS.
+#
+# Rationale: the NAS is the only storage with an offsite copy, and everything
+# in git rebuilds itself. What neither covers is databases and app state on
+# local disks — that is exactly what this playbook captures.
+#
+#   ansible-playbook backup.yml                  # everything
+#   ansible-playbook backup.yml --limit utility  # one host
+#   ansible-playbook backup.yml --check          # dry run
+#
+# Databases are discovered by image, not listed, so a new Postgres container is
+# backed up the day it appears. Non-database state is declared in host_vars.
+
+- name: Back up Docker host state
+  hosts: docker_vms
+  become: false
+  gather_facts: true
+
+  tasks:
+    - name: Verify the backup target is present
+      ansible.builtin.stat:
+        path: "{{ backup_root | dirname }}"
+      register: backup_parent
+
+    - name: Fail early if TrueNAS is not mounted
+      ansible.builtin.assert:
+        that: backup_parent.stat.exists and backup_parent.stat.isdir
+        fail_msg: >-
+          {{ backup_root | dirname }} is missing on {{ inventory_hostname }}.
+          The NFS mount is probably down — refusing to write backups to the
+          local disk, which would defeat the point.
+
+    - name: Create this host's backup directories
+      ansible.builtin.file:
+        path: "{{ backup_root }}/{{ inventory_hostname }}/{{ item }}"
+        state: directory
+        mode: "0750"
+      loop: [databases, volumes, paths]
+
+    # ---------- databases ----------
+
+    - name: Find running database containers
+      ansible.builtin.shell:
+        cmd: >-
+          docker ps --format '{{ '{{' }}.Names{{ '}}' }}\t{{ '{{' }}.Image{{ '}}' }}'
+          | grep -Ei '{{ backup_db_images | join("|") }}'
+          | cut -f1
+      register: db_containers
+      changed_when: false
+      failed_when: false
+
+    - name: Dump each database
+      # POSTGRES_USER is read from inside the container, so no credentials are
+      # duplicated here and none end up in the repo.
+      ansible.builtin.shell:
+        cmd: >-
+          set -o pipefail;
+          docker exec {{ item }} sh -c
+          'pg_dumpall -U "$POSTGRES_USER" 2>/dev/null
+           || mysqldump --all-databases -u root -p"$MYSQL_ROOT_PASSWORD"'
+          | gzip -c
+          > {{ backup_root }}/{{ inventory_hostname }}/databases/{{ item }}-{{ ansible_date_time.date }}.sql.gz
+        executable: /bin/bash
+      loop: "{{ db_containers.stdout_lines | default([]) }}"
+      register: db_dump
+      failed_when: false
+      changed_when: db_dump.rc == 0
+
+    - name: Discard dumps that came out empty
+      # A failed dump still creates a file. An empty archive is worse than no
+      # archive, because it looks like a backup.
+      ansible.builtin.shell:
+        cmd: >-
+          find {{ backup_root }}/{{ inventory_hostname }}/databases
+          -name '*-{{ ansible_date_time.date }}.sql.gz' -size -100c -delete -print
+      register: empty_dumps
+      changed_when: empty_dumps.stdout | length > 0
+
+    # ---------- named volumes ----------
+
+    - name: Archive named volumes
+      ansible.builtin.shell:
+        cmd: >-
+          docker run --rm
+          -v {{ item }}:/src:ro
+          -v {{ backup_root }}/{{ inventory_hostname }}/volumes:/backup
+          alpine:latest
+          tar czf /backup/{{ item }}-{{ ansible_date_time.date }}.tar.gz -C /src .
+      loop: "{{ backup_volumes | default([]) }}"
+      register: vol_backup
+      failed_when: false
+      changed_when: vol_backup.rc == 0
+
+    # ---------- local paths ----------
+
+    - name: Archive local directories
+      ansible.builtin.shell:
+        cmd: >-
+          set -o pipefail;
+          tar czf
+          {{ backup_root }}/{{ inventory_hostname }}/paths/{{ item | basename }}-{{ ansible_date_time.date }}.tar.gz
+          -C {{ item | dirname }} {{ item | basename }}
+        executable: /bin/bash
+      loop: "{{ backup_paths | default([]) }}"
+      become: true
+      register: path_backup
+      failed_when: false
+      changed_when: path_backup.rc == 0
+
+    # ---------- retention ----------
+
+    - name: Delete backups older than the retention window
+      ansible.builtin.shell:
+        cmd: >-
+          find {{ backup_root }}/{{ inventory_hostname }}
+          -type f \( -name '*.sql.gz' -o -name '*.tar.gz' \)
+          -mtime +{{ backup_retention_days }} -delete -print
+      register: pruned
+      changed_when: pruned.stdout | length > 0
+
+    - name: Report what this host wrote
+      ansible.builtin.shell:
+        cmd: >-
+          find {{ backup_root }}/{{ inventory_hostname }}
+          -name '*-{{ ansible_date_time.date }}.*' -printf '%f (%s bytes)\n'
+      register: written
+      changed_when: false
+
+    - name: Show today's backups
+      ansible.builtin.debug:
+        msg: "{{ written.stdout_lines | default(['nothing written — investigate']) }}"
+
+- name: Back up Kubernetes databases
+  hosts: k3s_master
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Verify the backup target is present
+      ansible.builtin.stat:
+        path: "{{ backup_root | dirname }}"
+      register: k8s_backup_parent
+
+    - name: Fail early if TrueNAS is not mounted on the master
+      ansible.builtin.assert:
+        that: k8s_backup_parent.stat.exists and k8s_backup_parent.stat.isdir
+        fail_msg: >-
+          {{ backup_root | dirname }} is missing on {{ inventory_hostname }}.
+          Mount the TrueNAS export on the k3s master, or override backup_root
+          in group_vars/k3s_master.yml to a path that exists.
+
+    - name: Create the Kubernetes backup directory
+      ansible.builtin.file:
+        path: "{{ backup_root }}/kubernetes"
+        state: directory
+        mode: "0750"
+
+    - name: Find Postgres pods across all namespaces
+      ansible.builtin.shell:
+        cmd: >-
+          kubectl get pods -A
+          -o jsonpath='{range .items[*]}{.metadata.namespace}{"\t"}{.metadata.name}{"\t"}{.spec.containers[*].image}{"\n"}{end}'
+          | grep -Ei 'postgres|mariadb|mysql'
+          | awk '{print $1"/"$2}'
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+      register: k8s_db_pods
+      changed_when: false
+      failed_when: false
+
+    - name: Dump each Kubernetes database
+      ansible.builtin.shell:
+        cmd: >-
+          set -o pipefail;
+          kubectl exec -n {{ (item | split('/'))[0] }} {{ (item | split('/'))[1] }}
+          -- sh -c 'pg_dumpall -U "$POSTGRES_USER"'
+          | gzip -c
+          > {{ backup_root }}/kubernetes/{{ (item | split('/'))[0] }}-{{ (item | split('/'))[1] }}-{{ ansible_date_time.date }}.sql.gz
+        executable: /bin/bash
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+      loop: "{{ k8s_db_pods.stdout_lines | default([]) }}"
+      register: k8s_dump
+      failed_when: false
+      changed_when: k8s_dump.rc == 0
+
+    - name: Discard dumps that came out empty
+      ansible.builtin.shell:
+        cmd: >-
+          find {{ backup_root }}/kubernetes
+          -name '*-{{ ansible_date_time.date }}.sql.gz' -size -100c -delete -print
+      register: k8s_empty
+      changed_when: k8s_empty.stdout | length > 0
+
+    - name: Delete backups older than the retention window
+      ansible.builtin.shell:
+        cmd: >-
+          find {{ backup_root }}/kubernetes -type f -name '*.sql.gz'
+          -mtime +{{ backup_retention_days }} -delete -print
+      register: k8s_pruned
+      changed_when: k8s_pruned.stdout | length > 0
+
+    - name: Show today's backups
+      ansible.builtin.shell:
+        cmd: >-
+          find {{ backup_root }}/kubernetes
+          -name '*-{{ ansible_date_time.date }}.sql.gz' -printf '%f (%s bytes)\n'
+      register: k8s_written
+      changed_when: false
+
+    - name: Report what Kubernetes wrote
+      ansible.builtin.debug:
+        msg: "{{ k8s_written.stdout_lines | default(['nothing written — investigate']) }}"
+
+# Yamtrack's SQLite file is not dumped here. SQLite needs `.backup` rather than
+# a file copy to be consistent, and the pod has no sqlite3 binary. Track it
+# separately if that data ever matters beyond re-scraping.

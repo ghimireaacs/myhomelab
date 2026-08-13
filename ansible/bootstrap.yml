@@ -1,0 +1,81 @@
+---
+# Take a freshly cloned VM from blank to ready-to-run.
+#
+#   ansible-playbook bootstrap.yml --limit <newhost>
+#
+# Cloud-init already handles the user, NFS mount, timezone and base packages on
+# VMs cloned from docker-template. This playbook is what makes a host built any
+# other way — or a template that has drifted — match the others.
+
+- name: Bootstrap a Docker host
+  hosts: docker_vms
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Install base packages
+      ansible.builtin.apt:
+        name:
+          - nfs-common
+          - zsh
+          - qemu-guest-agent
+          - curl
+          - git
+          - htop
+          - ca-certificates
+        state: present
+        update_cache: true
+
+    - name: Enable the guest agent so Proxmox can see the VM properly
+      ansible.builtin.systemd:
+        name: qemu-guest-agent
+        enabled: true
+        state: started
+
+    - name: Set timezone
+      community.general.timezone:
+        name: Australia/Sydney
+      failed_when: false
+
+    - name: Ensure the TrueNAS export is mounted
+      ansible.posix.mount:
+        path: /home/ghost/ghostsilo
+        src: "10.10.10.200:/mnt/ghostdata/ghostsilo"
+        fstype: nfs
+        opts: _netdev,auto,nofail
+        state: mounted
+
+    - name: Confirm the share is actually readable
+      ansible.builtin.stat:
+        path: "{{ repo_root }}/myhomelab"
+      register: repo_check
+
+    - name: Fail if the repo is not visible over NFS
+      ansible.builtin.assert:
+        that: repo_check.stat.exists
+        fail_msg: >-
+          {{ repo_root }}/myhomelab is not readable. Nothing else here will
+          work until the NFS mount is healthy.
+
+- name: Install Docker
+  ansible.builtin.import_playbook: install-docker.yml
+
+- name: Start the containers every Docker VM is expected to run
+  hosts: docker_vms
+  become: false
+  gather_facts: false
+
+  tasks:
+    - name: Bring up the default container set
+      ansible.builtin.shell:
+        cmd: docker compose up -d
+        chdir: "{{ repo_root }}/myhomelab/docker/defaultContainers"
+      register: defaults_up
+      failed_when: false
+      changed_when: defaults_up.rc == 0
+
+    - name: Note the next step
+      ansible.builtin.debug:
+        msg: >-
+          Host ready. Run deploy.yml to bring up this host's application
+          stacks, then restore data with the runbook in wiki guides/disaster-recovery.

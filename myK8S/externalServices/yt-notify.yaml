@@ -1,0 +1,58 @@
+# 1. Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: yt-notify-service
+  namespace: external-infra
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+---
+# 2. EndpointSlice
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: yt-notify-slice
+  namespace: external-infra
+  labels:
+    kubernetes.io/service-name: yt-notify-service
+addressType: IPv4
+ports:
+  - name: http
+    port: 8767
+    protocol: TCP
+endpoints:
+  - addresses:
+      - "${YT_NOTIFY_IP}"
+    conditions:
+      ready: true
+---
+# 3. Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: yt-notify-ingress
+  namespace: external-infra
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod-cf"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - "ytnotify.${BASE_DOMAIN}"
+      secretName: yt-notify-tls-secret
+  rules:
+    - host: "ytnotify.${BASE_DOMAIN}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: yt-notify-service
+                port:
+                  number: 80

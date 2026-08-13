@@ -2,6 +2,7 @@ resource "proxmox_vm_qemu" "vm" {
   name        = var.name
   target_node = var.target_node
   vmid        = var.vmid
+  onboot      = var.onboot
 
   # Clone from template
   clone      = var.clone_template

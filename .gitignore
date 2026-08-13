@@ -1,11 +1,19 @@
 CLAUDE.md
 CLAUDE.local.md
 
-# Docker secrets
+# Docker secrets — .env and any variant (.env.local, .env.prod, ...).
+# The .env.example templates are re-included below and stay tracked.
 **/.env
+**/.env.*
+!**/.env.example
 
-# Kubernetes secrets
-**/*-secrets.yaml
+# Kubernetes secrets.
+# This repo is PUBLIC. The glob must catch both the singular and plural
+# spellings — `*-secret.yaml` files hold a real Cloudflare API token and
+# admin passwords, and an earlier `*-secrets.yaml` pattern silently missed
+# them. Templates end in .tmpl/.example, so they are unaffected.
+**/*secret*.yaml
+**/*secret*.yml
 myK8S/.env
 
 # Terraform secrets and state

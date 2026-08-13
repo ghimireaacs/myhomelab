@@ -36,5 +36,10 @@ set -a
 source "$ENV_FILE"
 set +a
 
+# Substitute ONLY variables defined in .env — a bare `envsubst` would also
+# replace unrelated $vars inside manifests (e.g. Grafana alert templates
+# like {{ $labels.instance }}) with empty strings and silently corrupt them.
+VARS="$(grep -oE '^[A-Za-z_][A-Za-z0-9_]*' "$ENV_FILE" | sed 's/^/${/;s/$/}/' | tr '\n' ' ')"
+
 # Substitute and apply
-envsubst < "$TEMPLATE" | kubectl apply -f - "$@"
+envsubst "$VARS" < "$TEMPLATE" | kubectl apply -f - "$@"

@@ -109,6 +109,10 @@ spec:
               mountPath: /etc/grafana/provisioning/alerting
             - name: grafana-dashboard-sitespeed
               mountPath: /etc/grafana/dashboards/sitespeed
+            - name: grafana-dashboard-jobpipeline
+              mountPath: /etc/grafana/dashboards/jobpipeline
+            - name: grafana-dashboard-jobapplications
+              mountPath: /etc/grafana/dashboards/jobapplications
       volumes:
         - name: grafana-data
           persistentVolumeClaim:
@@ -131,3 +135,9 @@ spec:
         - name: grafana-dashboard-sitespeed
           configMap:
             name: grafana-dashboard-sitespeed
+        - name: grafana-dashboard-jobpipeline
+          configMap:
+            name: grafana-dashboard-jobpipeline
+        - name: grafana-dashboard-jobapplications
+          configMap:
+            name: grafana-dashboard-jobapplications

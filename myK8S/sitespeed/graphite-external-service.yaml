@@ -1,0 +1,18 @@
+# Exposes Graphite's carbon plaintext receiver outside the cluster so
+# external devices (TrueNAS reporting exporter) can push metrics.
+apiVersion: v1
+kind: Service
+metadata:
+  name: graphite-external
+  namespace: infra
+  annotations:
+    metallb.io/loadBalancerIPs: ${GRAPHITE_LB_IP}
+spec:
+  type: LoadBalancer
+  selector:
+    app: graphite
+  ports:
+    - name: plaintext
+      port: 2003
+      targetPort: 2003
+      protocol: TCP

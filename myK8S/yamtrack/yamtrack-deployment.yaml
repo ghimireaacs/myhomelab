@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yamtrack
+  namespace: personal
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # SQLite on RWO local-path — never run two pods against it
+  selector:
+    matchLabels:
+      app: yamtrack
+  template:
+    metadata:
+      labels:
+        app: yamtrack
+    spec:
+      # DB workloads pin to kubertwo — see wiki 04-kubernetes "Database Placement Rule"
+      nodeSelector:
+        kubernetes.io/hostname: kubertwo
+      containers:
+        - name: yamtrack
+          image: ghcr.io/fuzzygrim/yamtrack:latest
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 25m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          ports:
+            - containerPort: 8000
+          env:
+            - name: TZ
+              value: Australia/Sydney
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: yamtrack-secrets
+                  key: secret
+            - name: REDIS_URL
+              value: redis://localhost:6379
+            - name: URLS
+              value: https://yamtrack.${BASE_DOMAIN}
+          volumeMounts:
+            - name: yamtrack-db
+              mountPath: /yamtrack/db
+        # Celery broker/cache only — ephemeral by design, no PVC needed
+        - name: redis
+          image: redis:8-alpine
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          ports:
+            - containerPort: 6379
+      volumes:
+        - name: yamtrack-db
+          persistentVolumeClaim:
+            claimName: yamtrack-pvc

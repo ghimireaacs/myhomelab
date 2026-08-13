@@ -1,25 +1,25 @@
 variable "name" {
-  description = "VM hostname"
-  type        = string
-}
-
-variable "target_node" {
-  description = "Proxmox node to place this VM on"
+  description = "VM name in Proxmox"
   type        = string
 }
 
 variable "vmid" {
-  description = "Proxmox VMID"
+  description = "Explicit VMID — must match the existing VM when importing"
   type        = number
 }
 
+variable "target_node" {
+  description = "Proxmox node to create the VM on"
+  type        = string
+}
+
 variable "clone_template" {
-  description = "Template VM name to clone from"
+  description = "Template to full-clone"
   type        = string
 }
 
 variable "storage" {
-  description = "Proxmox storage pool for disk"
+  description = "Storage pool for the disk"
   type        = string
 }
 
@@ -31,30 +31,32 @@ variable "bridge" {
 variable "memory" {
   description = "RAM in MB"
   type        = number
-  default     = 4096
 }
 
 variable "cores" {
   description = "vCPU cores"
   type        = number
-  default     = 2
 }
 
 variable "disk_size" {
-  description = "Root disk size (e.g. '32G')"
+  description = "Disk size, e.g. 32G"
   type        = string
-  default     = "32G"
+}
+
+variable "onboot" {
+  description = "Start the VM when the host boots"
+  type        = bool
+  default     = true
 }
 
 variable "ip" {
-  description = "Static IP address for this VM"
+  description = "Static IPv4 address"
   type        = string
 }
 
 variable "cidr" {
-  description = "Subnet prefix length"
+  description = "Network prefix length"
   type        = number
-  default     = 24
 }
 
 variable "gateway" {
@@ -63,12 +65,11 @@ variable "gateway" {
 }
 
 variable "ciuser" {
-  description = "Cloud-init username"
+  description = "Cloud-init user"
   type        = string
-  default     = "ghost"
 }
 
 variable "sshkeys" {
-  description = "SSH public key(s) to inject via cloud-init"
+  description = "Public keys for the cloud-init user"
   type        = string
 }

@@ -1,15 +1,52 @@
 ---
-- name: Update Docker containers on all VMs
+# Pull newer images and restart every compose stack this host owns.
+#
+#   ansible-playbook docker-update.yml
+#   ansible-playbook docker-update.yml --limit utility
+#
+# Only stacks whose .env is present are touched — see deploy.yml for why.
+
+- name: Update Docker stacks
   hosts: docker_vms
-  become: true
+  become: false
+  gather_facts: false
 
   tasks:
-    - name: Pull and restart all stacks in myhomelab/docker
-      shell: |
-        for dir in ~/ghostsilo/99_System/Claude\ Codes/myhomelab/docker/*/; do
-          [ -f "$dir/docker-compose.yaml" ] && cd "$dir" && docker compose pull && docker compose up -d
-        done
-      args:
+    - name: Collect compose stacks
+      ansible.builtin.shell:
+        # -printf '%h' yields the containing directory directly. Do not pipe
+        # through `xargs dirname` — the repo path contains a space, and xargs
+        # would split it into two bogus paths.
+        cmd: >-
+          { for d in {{ compose_search_dirs | map('quote') | join(' ') }}; do
+              find "$d" -maxdepth 2 \( -name docker-compose.yaml -o -name docker-compose.yml -o -name compose.yml \) -printf '%h\n' 2>/dev/null;
+            done;
+            for s in {{ compose_extra_stacks | map('quote') | join(' ') }}; do
+              find "$s" -maxdepth 1 \( -name docker-compose.yaml -o -name docker-compose.yml -o -name compose.yml \) -printf '%h\n' 2>/dev/null;
+            done; }
+          | sort -u
         executable: /bin/bash
-      become: false
-      ignore_errors: true
+      register: stacks
+      changed_when: false
+
+    - name: Pull and restart each stack
+      ansible.builtin.shell:
+        cmd: docker compose pull --quiet && docker compose up -d
+        chdir: "{{ item }}"
+      loop: "{{ stacks.stdout_lines | default([]) }}"
+      register: stack_update
+      # A stack belonging to another host, or one missing its .env, fails here
+      # without stopping the rest.
+      failed_when: false
+      changed_when: stack_update.rc == 0
+
+    - name: Report stacks that failed to come up
+      ansible.builtin.debug:
+        msg: >-
+          {{ stack_update.results
+             | default([])
+             | selectattr('rc', 'defined')
+             | selectattr('rc', 'ne', 0)
+             | map(attribute='item')
+             | list
+             | default(['none'], true) }}

@@ -17,8 +17,8 @@ data:
             settings:
               url: http://${NTFY_IP}:2586/homelab-alerts
               httpMethod: POST
-              authorizationScheme: Bearer
-              authorizationCredentials: ${NTFY_ADMIN_TOKEN}
+              authorization_scheme: Bearer
+              authorization_credentials: ${NTFY_ADMIN_TOKEN}
 
     policies:
       - orgId: 1
@@ -63,12 +63,218 @@ data:
                         params: [A]
                       reducer:
                         type: last
-            noDataState: NoData
+            noDataState: OK
             execErrState: Error
             for: 5m
             annotations:
               summary: "High disk usage on {{ $labels.instance }}"
-              description: "{{ $labels.mountpoint }} on {{ $labels.instance }} is at {{ printf \"%.1f\" $value }}% — check and prune."
+              description: "{{ $labels.mountpoint }} on {{ $labels.instance }} is at {{ printf \"%.1f\" $values.A.Value }}% — check and prune."
+            labels:
+              severity: warning
+            isPaused: false
+
+          - uid: zfs-pool-capacity
+            title: "TrueNAS Pool Capacity High"
+            condition: C
+            data:
+              - refId: A
+                relativeTimeRange:
+                  from: 600
+                  to: 0
+                datasourceUid: graphite
+                model:
+                  refId: A
+                  target: 'scale(divideSeries(scale.truenas.truenas_pool.usage.used, scale.truenas.truenas_pool.usage.total), 100)'
+              - refId: B
+                datasourceUid: '-100'
+                model:
+                  type: reduce
+                  refId: B
+                  expression: A
+                  reducer: last
+              - refId: C
+                datasourceUid: '-100'
+                model:
+                  type: threshold
+                  refId: C
+                  expression: B
+                  conditions:
+                    - evaluator:
+                        type: gt
+                        params: [80]
+                      operator:
+                        type: and
+                      query:
+                        params: [B]
+                      reducer:
+                        type: last
+            noDataState: OK
+            execErrState: Error
+            for: 15m
+            annotations:
+              summary: "TrueNAS ZFS pool is filling up"
+              description: "TrueNAS pool is at {{ printf \"%.1f\" $values.B.Value }}% used. ZFS degrades past 80% and you have no backups — free space or expand."
+            labels:
+              severity: warning
+            isPaused: false
+
+      - orgId: 1
+        name: infra-alerts
+        folder: Homelab Alerts
+        interval: 1m
+        rules:
+          - uid: instance-down
+            title: "Instance Down"
+            condition: B
+            data:
+              - refId: A
+                relativeTimeRange:
+                  from: 300
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  expr: 'up'
+                  refId: A
+                  instant: true
+              - refId: B
+                datasourceUid: '-100'
+                model:
+                  type: threshold
+                  refId: B
+                  expression: A
+                  conditions:
+                    - evaluator:
+                        type: lt
+                        params: [1]
+                      operator:
+                        type: and
+                      query:
+                        params: [A]
+                      reducer:
+                        type: last
+            noDataState: Alerting
+            execErrState: Error
+            for: 5m
+            annotations:
+              summary: "{{ $labels.instance }} is down"
+              description: "Prometheus target {{ $labels.instance }} (job {{ $labels.job }}) has been unreachable for 5m."
+            labels:
+              severity: critical
+            isPaused: false
+
+          - uid: high-memory-usage
+            title: "High Memory Usage"
+            condition: B
+            data:
+              - refId: A
+                relativeTimeRange:
+                  from: 300
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  expr: '(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100'
+                  refId: A
+                  instant: true
+              - refId: B
+                datasourceUid: '-100'
+                model:
+                  type: threshold
+                  refId: B
+                  expression: A
+                  conditions:
+                    - evaluator:
+                        type: gt
+                        params: [99]
+                      operator:
+                        type: and
+                      query:
+                        params: [A]
+                      reducer:
+                        type: last
+            noDataState: OK
+            execErrState: Error
+            for: 10m
+            annotations:
+              summary: "High memory on {{ $labels.instance }}"
+              description: "{{ $labels.instance }} memory is at {{ printf \"%.1f\" $values.A.Value }}%. homeserver normally runs 90%+; 99%+ for 10m means real exhaustion / OOM risk."
+            labels:
+              severity: warning
+            isPaused: false
+
+          - uid: filesystem-readonly
+            title: "Filesystem Read-Only"
+            condition: B
+            data:
+              - refId: A
+                relativeTimeRange:
+                  from: 300
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  expr: 'node_filesystem_readonly{fstype!~"tmpfs|overlay|squashfs|devtmpfs|nullfs|iso9660|cd9660|erofs|ramfs"}'
+                  refId: A
+                  instant: true
+              - refId: B
+                datasourceUid: '-100'
+                model:
+                  type: threshold
+                  refId: B
+                  expression: A
+                  conditions:
+                    - evaluator:
+                        type: gt
+                        params: [0]
+                      operator:
+                        type: and
+                      query:
+                        params: [A]
+                      reducer:
+                        type: last
+            noDataState: OK
+            execErrState: Error
+            for: 5m
+            annotations:
+              summary: "{{ $labels.mountpoint }} on {{ $labels.instance }} is read-only"
+              description: "Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} flipped read-only — usually a disk or NFS failure. Investigate now."
+            labels:
+              severity: critical
+            isPaused: false
+
+          - uid: pod-crashlooping
+            title: "Pod CrashLooping"
+            condition: B
+            data:
+              - refId: A
+                relativeTimeRange:
+                  from: 300
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  expr: 'kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}'
+                  refId: A
+                  instant: true
+              - refId: B
+                datasourceUid: '-100'
+                model:
+                  type: threshold
+                  refId: B
+                  expression: A
+                  conditions:
+                    - evaluator:
+                        type: gt
+                        params: [0]
+                      operator:
+                        type: and
+                      query:
+                        params: [A]
+                      reducer:
+                        type: last
+            noDataState: OK
+            execErrState: Error
+            for: 10m
+            annotations:
+              summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crashlooping"
+              description: "Container {{ $labels.container }} in {{ $labels.namespace }}/{{ $labels.pod }} has been in CrashLoopBackOff for 10m."
             labels:
               severity: warning
             isPaused: false

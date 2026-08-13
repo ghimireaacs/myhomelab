@@ -1,0 +1,12 @@
+---
+# Databases are found automatically (see backup.yml). Listed here is only the
+# state that lives on this VM's local disk and would otherwise be lost with it.
+
+backup_volumes:
+  - mattermost_mattermost_data      # uploaded files
+  - mattermost_mattermost_config    # config.json, including settings not in .env
+  - mattermost_mattermost_plugins
+  - forgejo_forgejo-runner-data     # runner registration
+
+backup_paths:
+  - /home/ghost/forgejo             # every self-hosted git repository

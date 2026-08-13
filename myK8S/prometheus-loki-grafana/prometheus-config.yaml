@@ -30,3 +30,7 @@ data:
         static_configs:
           - targets: ${K8S_NODE_EXPORTER_TARGETS}
 
+      - job_name: "opnsense"
+        static_configs:
+          - targets: ${OPNSENSE_EXPORTER_TARGETS}
+

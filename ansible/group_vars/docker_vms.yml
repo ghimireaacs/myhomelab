@@ -1,0 +1,12 @@
+---
+# Where the repo is reachable from inside the Docker VMs (NFS).
+repo_root: /home/ghost/ghostsilo/99_System/Claude Codes
+
+# Compose stacks live in two places: the homelab repo, and a few standalone
+# project folders. deploy.yml and docker-update.yml walk both, so a stack
+# outside myhomelab/docker is not silently skipped.
+compose_search_dirs:
+  - "{{ repo_root }}/myhomelab/docker"
+
+compose_extra_stacks:
+  - "{{ repo_root }}/tools/yt-notify"

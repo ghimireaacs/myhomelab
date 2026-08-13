@@ -1,0 +1,12 @@
+---
+# Backups land on TrueNAS, because the NAS is the only thing with an offsite copy.
+# Everything not written here must be reproducible from git.
+backup_root: /home/ghost/ghostsilo/90_Backups/ansible
+backup_retention_days: 14
+
+# Images treated as databases worth a logical dump. Matched against the
+# container image string, so tags and registries don't matter.
+backup_db_images:
+  - postgres
+  - mariadb
+  - mysql

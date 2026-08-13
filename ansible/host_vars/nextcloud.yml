@@ -1,0 +1,6 @@
+---
+# Nextcloud's files live on the dedicated NFS dataset, but its database and
+# Redis are named volumes on this VM's local disk.
+backup_volumes:
+  - nextcloud_db
+  - nextcloud_redis

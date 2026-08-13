@@ -1,32 +1,66 @@
-# VM definitions — map of name → static IP
-# Copy to homelab.tfvars and fill in your real IPs — never commit homelab.tfvars
+# Copy to homelab.tfvars and fill in real IPs. homelab.tfvars is gitignored.
+#
+# These entries mirror the VMs that already exist, so `terraform import` can
+# adopt them rather than creating duplicates. See README.md for the import
+# procedure — running `apply` against an unimported fleet will try to build a
+# second copy of everything.
+#
+# Not represented here, on purpose:
+#   - the Pi-hole LXC — this module creates qemu VMs, not containers
+#   - the Home Assistant OS VM — an appliance image, not a template clone
+#   - the Wazuh VM — built from a community script, adopt it only if that
+#     script is ever replaced by a template clone
 
 vms = {
-  "prod-vm-01" = "10.0.0.X"
-  "prod-vm-02" = "10.0.0.X"
+  kuberone = {
+    vmid      = 100
+    ip        = "10.0.0.X"
+    memory    = 6144
+    cores     = 2
+    disk_size = "25G"
+    template  = "ubuntu-base-template" # k3s node, no Docker stack needed
+  }
+
+  ghostgpu = {
+    vmid      = 111
+    ip        = "10.0.0.X"
+    memory    = 8192
+    cores     = 4
+    disk_size = "80G"
+  }
+
+  nextcloud = {
+    vmid      = 113
+    ip        = "10.0.0.X"
+    memory    = 2048
+    cores     = 2
+    disk_size = "32G"
+  }
+
+  utility = {
+    vmid      = 114
+    ip        = "10.0.0.X"
+    memory    = 8192
+    cores     = 4
+    disk_size = "32G"
+  }
+
+  kubertwo = {
+    vmid        = 101
+    ip          = "10.0.0.X"
+    memory      = 6144
+    cores       = 2
+    disk_size   = "325G" # holds every local-path database PV
+    target_node = "homeservertoo"
+    template    = "ubuntu-base-template"
+  }
 }
 
-# Target Proxmox node
-target_node = "homeserver"
-
-# VMID assignment starts here and increments per VM (sorted by name)
-vmid_start = 300
-
-# Template to clone
-clone_template = "tf-debian-template"
-
-# Proxmox storage pool
-storage = "local-lvm"
-
-# Hardware
-memory    = 4096   # MB
-cores     = 2
-disk_size = "32G"
-
-# Network
-bridge  = "vmbr0"
-gateway = "10.0.0.1"
-cidr    = 24
-
-# Cloud-init user
-ciuser = "ghost"
+# Defaults for anything a VM does not specify
+target_node    = "homeserver"
+clone_template = "docker-template"
+storage        = "local-lvm"
+bridge         = "vmbr0"
+gateway        = "10.0.0.1"
+cidr           = 24
+ciuser         = "ghost"

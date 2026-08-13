@@ -1,0 +1,9 @@
+---
+# Postiz keeps its datastores on local disk. Postgres is dumped logically by
+# the database task; the rest is captured as files.
+backup_paths:
+  - /home/ghost/postiz/redis
+  - /home/ghost/postiz/temporal-postgres
+
+# Elasticsearch is deliberately excluded — it is a rebuildable index, and it is
+# large. If Postiz ever depends on it surviving, add it here.

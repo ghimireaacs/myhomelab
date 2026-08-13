@@ -1,0 +1,58 @@
+# 1. Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mattermost-service
+  namespace: external-infra
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+---
+# 2. EndpointSlice
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: mattermost-slice
+  namespace: external-infra
+  labels:
+    kubernetes.io/service-name: mattermost-service
+addressType: IPv4
+ports:
+  - name: http
+    port: 8065
+    protocol: TCP
+endpoints:
+  - addresses:
+      - "${MATTERMOST_IP}"
+    conditions:
+      ready: true
+---
+# 3. Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mattermost-ingress
+  namespace: external-infra
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod-cf"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - "mattermost.${BASE_DOMAIN}"
+      secretName: mattermost-tls-secret
+  rules:
+    - host: "mattermost.${BASE_DOMAIN}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mattermost-service
+                port:
+                  number: 80
