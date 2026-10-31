@@ -1,4 +1,5 @@
 #!/bin/bash
+set -o pipefail   # fail if pg_dump fails, not just gzip
 
 BACKUP_DIR="/home/ghost/ghostsilo/90_Backups/Immich/Database"
 CONTAINER="immich_postgres"
