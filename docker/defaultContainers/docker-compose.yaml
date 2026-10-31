@@ -53,7 +53,7 @@ services:
     environment:
       - DOCKER_API_VERSION=1.54
       - TZ=Australia/Sydney
-      - WATCHTOWER_SCHEDULE=0 0 3 * * *
+      - WATCHTOWER_SCHEDULE=0 0 7 * * *
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_INCLUDE_STOPPED=false
       - WATCHTOWER_ROLLING_RESTART=false
