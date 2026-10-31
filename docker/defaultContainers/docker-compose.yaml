@@ -23,6 +23,10 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
+    # Lower memory: 30s housekeeping instead of 1s, Docker containers only
+    command:
+      - --housekeeping_interval=30s
+      - --docker_only=true
     ports:
       - "8080:8080"
     volumes:
