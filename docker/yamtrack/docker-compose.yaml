@@ -1,0 +1,32 @@
+# Yamtrack (media tracker, kept by the owner 2026-11-01). Ported from k3s (personal/yamtrack),
+# 2026-11-02. SQLite on the VM's SSD; Redis is only the Celery broker/cache (no volume).
+name: yamtrack
+
+services:
+  yamtrack:
+    image: ghcr.io/fuzzygrim/yamtrack@sha256:78497b454b2b52d3b1062f6fd238351d714cff0895db4369e49ace36f4622e75
+    container_name: yamtrack
+    restart: unless-stopped
+    depends_on: [redis]
+    ports:
+      - "8094:8000"
+    environment:
+      - TZ=Australia/Sydney
+      - SECRET=${YAMTRACK_SECRET:?set YAMTRACK_SECRET in .env}
+      - REDIS_URL=redis://redis:6379
+      - URLS=https://yamtrack.${BASE_DOMAIN:?set BASE_DOMAIN in .env}
+    volumes:
+      - ${YAMTRACK_DATA_PATH:?set YAMTRACK_DATA_PATH in .env}:/yamtrack/db
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  redis:
+    image: redis@sha256:9d317178eceac8454a2284a9e6df2466b93c745529947f0cd42a0fa9609d7005
+    container_name: yamtrack-redis
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
