@@ -1,0 +1,143 @@
+{{- /*
+Routes to services on other hosts, and on this VM by host port. Ported from
+myK8S/externalServices and the k3s ingresses on 2026-11-01. Domain and IPs come from
+the container environment (see .env.example).
+
+Not ported on purpose:
+  retired: adminer, files (copyparty), whoami, home, rss, read, notes, audiobook,
+           kavita, lazylibrarian
+  backend down on 2026-11-01: portainer (:9443), uptime (Uptime Kuma), resume (RxResume)
+  owner-managed: the download-chain routes
+Apps still on k3s fall through to the "k3s-fallback" router at the bottom.
+*/ -}}
+{{- $d := env "BASE_DOMAIN" -}}
+{{- $utility := env "UTILITY_IP" -}}
+{{- $gpu := env "GHOSTGPU_IP" -}}
+http:
+  routers:
+    glance:
+      rule: "Host(`{{ $d }}`)"
+      service: glance
+    dozzle:
+      rule: "Host(`dozzle.{{ $d }}`)"
+      service: dozzle
+      middlewares: [lan-only]
+    forgejo:
+      rule: "Host(`git.{{ $d }}`)"
+      service: forgejo
+    infra:
+      rule: "Host(`infra.{{ $d }}`)"
+      service: infra
+    mattermost:
+      rule: "Host(`mattermost.{{ $d }}`)"
+      service: mattermost
+    ntfy:
+      rule: "Host(`ntfy.{{ $d }}`)"
+      service: ntfy
+    radicale:
+      rule: "Host(`radicale.{{ $d }}`)"
+      service: radicale
+    shuttle:
+      rule: "Host(`shuttle.{{ $d }}`)"
+      service: shuttle
+    ytnotify:
+      rule: "Host(`ytnotify.{{ $d }}`)"
+      service: ytnotify
+    immich:
+      rule: "Host(`immich.{{ $d }}`)"
+      service: immich
+    jellyfin:
+      rule: "Host(`jellyfin.{{ $d }}`)"
+      service: jellyfin
+    n8n:
+      rule: "Host(`n8n.{{ $d }}`)"
+      service: n8n
+    ollama-api:
+      rule: "Host(`ai.{{ $d }}`)"
+      service: ollama-api
+      middlewares: [lan-only]
+    open-webui:
+      rule: "Host(`ollama.{{ $d }}`)"
+      service: open-webui
+    homeassistant:
+      rule: "Host(`ha.{{ $d }}`)"
+      service: homeassistant
+    nextcloud:
+      rule: "Host(`cloud.{{ $d }}`)"
+      service: nextcloud
+      middlewares: [nextcloud-headers, nextcloud-dav-redirect]
+    pihole:
+      rule: "Host(`pihole.{{ $d }}`)"
+      service: pihole
+      middlewares: [lan-only, pihole-admin-redirect]
+    truenas:
+      rule: "Host(`truenas.{{ $d }}`)"
+      service: truenas
+      middlewares: [lan-only]
+    proxmox:
+      rule: "Host(`proxmox.{{ $d }}`)"
+      service: proxmox
+      middlewares: [lan-only]
+    traefik-dashboard:
+      rule: "Host(`traefik.{{ $d }}`)"
+      service: api@internal
+      middlewares: [lan-only]
+
+    # Everything not matched above goes to the old k3s Traefik, which still serves the
+    # apps on the cluster. Remove when k3s is retired.
+    k3s-fallback:
+      rule: 'HostRegexp(`^.+\.{{ $d | replace "." "\\." }}$`)'
+      priority: 1
+      service: k3s-traefik
+
+  services:
+    glance:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8090"}]}
+    dozzle:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8383"}]}
+    forgejo:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:3000"}]}
+    infra:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:1313"}]}
+    mattermost:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8065"}]}
+    ntfy:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:2586"}]}
+    radicale:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:5232"}]}
+    shuttle:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:5000"}]}
+    ytnotify:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8767"}]}
+    immich:
+      loadBalancer: {servers: [{url: "http://{{ $gpu }}:2283"}]}
+    jellyfin:
+      loadBalancer: {servers: [{url: "http://{{ $gpu }}:8096"}]}
+    n8n:
+      loadBalancer: {servers: [{url: "http://{{ $gpu }}:5678"}]}
+    ollama-api:
+      loadBalancer: {servers: [{url: "http://{{ $gpu }}:11434"}]}
+    open-webui:
+      loadBalancer: {servers: [{url: "http://{{ $gpu }}:3000"}]}
+    homeassistant:
+      loadBalancer: {servers: [{url: "http://{{ env "HOMEASSISTANT_IP" }}:8123"}]}
+    nextcloud:
+      loadBalancer: {servers: [{url: "http://{{ env "NEXTCLOUD_IP" }}:8090"}]}
+    pihole:
+      loadBalancer: {servers: [{url: "http://{{ env "PIHOLE_IP" }}:80"}]}
+    truenas:
+      loadBalancer: {servers: [{url: "http://{{ env "TRUENAS_IP" }}:80"}]}
+    proxmox:
+      loadBalancer:
+        servers: [{url: "https://{{ env "PROXMOX_IP" }}:8006"}]
+        serversTransport: self-signed
+    k3s-traefik:
+      loadBalancer:
+        passHostHeader: true
+        servers: [{url: "https://{{ env "K3S_TRAEFIK_IP" }}"}]
+        serversTransport: self-signed
+
+  serversTransports:
+    # Proxmox and the old k3s Traefik present certificates this proxy can't verify by IP.
+    self-signed:
+      insecureSkipVerify: true

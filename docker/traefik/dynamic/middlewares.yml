@@ -1,0 +1,36 @@
+# Shared middlewares. secure-headers is applied to every websecure router (entrypoint default).
+http:
+  middlewares:
+    secure-headers:
+      headers:
+        stsSeconds: 15552000
+        stsIncludeSubdomains: true
+        forceSTSHeader: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: strict-origin-when-cross-origin
+        # No frameDeny: Home Assistant and Nextcloud embed frames.
+
+    # LAN, Twingate (arrives through the connector on utility) and Docker bridges only.
+    lan-only:
+      ipAllowList:
+        sourceRange:
+          - 10.10.0.0/16
+          - 172.16.0.0/12
+          - 127.0.0.1/32
+
+    # Ported from the k3s middlewares (external-infra/*)
+    nextcloud-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: https
+    nextcloud-dav-redirect:
+      redirectRegex:
+        permanent: true
+        regex: "https://(.*)/.well-known/(card|cal)dav"
+        replacement: "https://${1}/remote.php/dav/"
+    pihole-admin-redirect:
+      redirectRegex:
+        permanent: true
+        regex: "^https://pihole\\.[^/]+/?$"
+        replacement: "/admin"
