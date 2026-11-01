@@ -5,7 +5,8 @@ the container environment (see .env.example).
 
 Not ported on purpose:
   retired: adminer, files (copyparty), whoami, home, rss, read, notes, audiobook,
-           kavita, lazylibrarian
+           kavita, lazylibrarian, git (Forgejo, stopped 2026-11-01; data archived in
+           90_Backups/forgejo)
   backend down on 2026-11-01: portainer (:9443), uptime (Uptime Kuma), resume (RxResume)
   owner-managed: the download-chain routes
 Apps still on k3s fall through to the "k3s-fallback" router at the bottom.
@@ -22,9 +23,6 @@ http:
       rule: "Host(`dozzle.{{ $d }}`)"
       service: dozzle
       middlewares: [lan-only]
-    forgejo:
-      rule: "Host(`git.{{ $d }}`)"
-      service: forgejo
     infra:
       rule: "Host(`infra.{{ $d }}`)"
       service: infra
@@ -107,8 +105,6 @@ http:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:8090"}]}
     dozzle:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:8383"}]}
-    forgejo:
-      loadBalancer: {servers: [{url: "http://{{ $utility }}:3000"}]}
     infra:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:1313"}]}
     mattermost:
