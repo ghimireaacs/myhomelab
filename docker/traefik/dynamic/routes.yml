@@ -56,6 +56,12 @@ http:
     paperless:
       rule: "Host(`paperless.{{ $d }}`)"
       service: paperless
+    vikunja:
+      rule: "Host(`todo.{{ $d }}`)"
+      service: vikunja
+    yamtrack:
+      rule: "Host(`yamtrack.{{ $d }}`)"
+      service: yamtrack
     immich:
       rule: "Host(`immich.{{ $d }}`)"
       service: immich
@@ -130,6 +136,10 @@ http:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:8093"}]}
     paperless:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:8000"}]}
+    vikunja:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:3456"}]}
+    yamtrack:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8094"}]}
     immich:
       loadBalancer: {servers: [{url: "http://{{ $gpu }}:2283"}]}
     jellyfin:
