@@ -49,6 +49,9 @@ http:
     actual-budget:
       rule: "Host(`budget.{{ $d }}`)"
       service: actual-budget
+    karakeep:
+      rule: "Host(`karakeep.{{ $d }}`)"
+      service: karakeep
     immich:
       rule: "Host(`immich.{{ $d }}`)"
       service: immich
@@ -119,6 +122,8 @@ http:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:8092"}]}
     actual-budget:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:5006"}]}
+    karakeep:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:3010"}]}
     immich:
       loadBalancer: {servers: [{url: "http://{{ $gpu }}:2283"}]}
     jellyfin:
