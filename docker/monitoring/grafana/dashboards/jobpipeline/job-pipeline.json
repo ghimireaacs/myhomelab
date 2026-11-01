@@ -1,0 +1,964 @@
+{
+ "title": "Job Pipeline",
+ "uid": "job-pipeline",
+ "schemaVersion": 38,
+ "version": 1,
+ "refresh": "5m",
+ "time": {
+  "from": "now-14d",
+  "to": "now"
+ },
+ "timezone": "browser",
+ "editable": true,
+ "panels": [
+  {
+   "id": 1,
+   "type": "stat",
+   "title": "Resumes Ready (complete)",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 4,
+    "w": 4,
+    "x": 0,
+    "y": 0
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT count(*) FROM job_listings WHERE status='complete'",
+     "format": "table"
+    }
+   ],
+   "options": {
+    "colorMode": "value",
+    "graphMode": "none",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "values": false
+    }
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 2,
+   "type": "stat",
+   "title": "Skipped (<55 or dup)",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 4,
+    "w": 4,
+    "x": 4,
+    "y": 0
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT count(*) FROM job_listings WHERE status='skipped'",
+     "format": "table"
+    }
+   ],
+   "options": {
+    "colorMode": "value",
+    "graphMode": "none",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "values": false
+    }
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "text",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 3,
+   "type": "stat",
+   "title": "In Queue",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 4,
+    "w": 4,
+    "x": 8,
+    "y": 0
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT count(*) FROM job_listings WHERE status IN ('new','claimed','scored')",
+     "format": "table"
+    }
+   ],
+   "options": {
+    "colorMode": "value",
+    "graphMode": "none",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "values": false
+    }
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "yellow",
+        "value": 50
+       },
+       {
+        "color": "red",
+        "value": 150
+       }
+      ]
+     }
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 4,
+   "type": "stat",
+   "title": "Ingested Today",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 4,
+    "w": 4,
+    "x": 12,
+    "y": 0
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT count(*) FROM job_listings WHERE created_at > now()::date",
+     "format": "table"
+    }
+   ],
+   "options": {
+    "colorMode": "value",
+    "graphMode": "none",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "values": false
+    }
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 5,
+   "type": "stat",
+   "title": "Completed Today",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 4,
+    "w": 4,
+    "x": 16,
+    "y": 0
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT count(*) FROM job_listings WHERE status='complete' AND created_at > now()::date",
+     "format": "table"
+    }
+   ],
+   "options": {
+    "colorMode": "value",
+    "graphMode": "none",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "values": false
+    }
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 6,
+   "type": "stat",
+   "title": "Avg Score (complete)",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 4,
+    "w": 4,
+    "x": 20,
+    "y": 0
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT round(avg(ats_score)) FROM job_listings WHERE status='complete'",
+     "format": "table"
+    }
+   ],
+   "options": {
+    "colorMode": "value",
+    "graphMode": "none",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "values": false
+    }
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "yellow",
+        "value": 0
+       },
+       {
+        "color": "red",
+        "value": 0
+       }
+      ]
+     }
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 7,
+   "type": "piechart",
+   "title": "Pipeline Funnel",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 8,
+    "x": 0,
+    "y": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT status, count(*) FROM job_listings GROUP BY status",
+     "format": "table"
+    }
+   ],
+   "options": {
+    "pieType": "donut",
+    "legend": {
+     "displayMode": "table",
+     "placement": "right",
+     "values": [
+      "value"
+     ]
+    },
+    "reduceOptions": {
+     "values": true
+    }
+   }
+  },
+  {
+   "id": 8,
+   "type": "barchart",
+   "title": "Score Distribution (all scored)",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 8,
+    "x": 8,
+    "y": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT ((ats_score/10)*10)::text AS bucket, count(*) AS jobs FROM job_listings WHERE ats_score IS NOT NULL GROUP BY 1 ORDER BY 1",
+     "format": "table"
+    }
+   ],
+   "options": {
+    "xField": "bucket",
+    "legend": {
+     "displayMode": "hidden"
+    }
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "continuous-GrYlRd"
+     }
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 9,
+   "type": "barchart",
+   "title": "Resume Templates Used",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 8,
+    "x": 16,
+    "y": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT resume_template, count(*) AS used FROM job_listings WHERE status='complete' AND resume_template IS NOT NULL GROUP BY 1 ORDER BY 2 DESC",
+     "format": "table"
+    }
+   ],
+   "options": {
+    "legend": {
+     "displayMode": "hidden"
+    }
+   }
+  },
+  {
+   "id": 10,
+   "type": "timeseries",
+   "title": "Jobs Ingested per Day",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 12
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT date_trunc('day',created_at) AS time, count(*) AS ingested FROM job_listings GROUP BY 1 ORDER BY 1",
+     "format": "time_series"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "drawStyle": "bars",
+      "fillOpacity": 60
+     }
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 11,
+   "type": "timeseries",
+   "title": "Completes per Day",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 12,
+    "y": 12
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT date_trunc('day',created_at) AS time, count(*) AS completed FROM job_listings WHERE status='complete' GROUP BY 1 ORDER BY 1",
+     "format": "time_series"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "drawStyle": "bars",
+      "fillOpacity": 60
+     },
+     "color": {
+      "fixedColor": "green",
+      "mode": "fixed"
+     }
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 12,
+   "type": "table",
+   "title": "Latest Tailored Resumes (top 15)",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 10,
+    "w": 14,
+    "x": 0,
+    "y": 20
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT company, job_title, ats_score AS score, resume_template AS template, location FROM job_listings WHERE status='complete' ORDER BY id DESC LIMIT 15",
+     "format": "table"
+    }
+   ],
+   "options": {
+    "showHeader": true
+   },
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "score"
+      },
+      "properties": [
+       {
+        "id": "custom.cellOptions",
+        "value": {
+         "type": "color-text"
+        }
+       },
+       {
+        "id": "thresholds",
+        "value": {
+         "mode": "absolute",
+         "steps": [
+          {
+           "color": "text",
+           "value": null
+          },
+          {
+           "color": "yellow",
+           "value": 60
+          },
+          {
+           "color": "green",
+           "value": 75
+          }
+         ]
+        }
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "id": 13,
+   "type": "table",
+   "title": "Best Matches Waiting (75+)",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 10,
+    "w": 10,
+    "x": 14,
+    "y": 20
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT company, job_title, ats_score AS score FROM job_listings WHERE status='complete' AND ats_score >= 75 ORDER BY ats_score DESC, id DESC LIMIT 15",
+     "format": "table"
+    }
+   ],
+   "options": {
+    "showHeader": true
+   }
+  },
+  {
+   "id": 14,
+   "type": "row",
+   "title": "Applications Sent (SEEK tracker)",
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 30
+   },
+   "panels": []
+  },
+  {
+   "id": 15,
+   "type": "stat",
+   "title": "Applied Total",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 4,
+    "w": 6,
+    "x": 0,
+    "y": 31
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT count(*) FROM applications",
+     "format": "table"
+    }
+   ],
+   "options": {
+    "colorMode": "value",
+    "graphMode": "none",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "values": false
+    }
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "blue",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 16,
+   "type": "stat",
+   "title": "Applied Today",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 4,
+    "w": 6,
+    "x": 6,
+    "y": 31
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT count(*) FROM applications WHERE date_applied::date = now()::date",
+     "format": "table"
+    }
+   ],
+   "options": {
+    "colorMode": "value",
+    "graphMode": "none",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "values": false
+    }
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "text",
+        "value": null
+       },
+       {
+        "color": "green",
+        "value": 1
+       }
+      ]
+     }
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 17,
+   "type": "stat",
+   "title": "Applied This Week",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 4,
+    "w": 6,
+    "x": 12,
+    "y": 31
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT count(*) FROM applications WHERE date_applied::date >= date_trunc('week', now())::date",
+     "format": "table"
+    }
+   ],
+   "options": {
+    "colorMode": "value",
+    "graphMode": "none",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "values": false
+    }
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 18,
+   "type": "stat",
+   "title": "Applied This Month",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 4,
+    "w": 6,
+    "x": 18,
+    "y": 31
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT count(*) FROM applications WHERE date_applied::date >= date_trunc('month', now())::date",
+     "format": "table"
+    }
+   ],
+   "options": {
+    "colorMode": "value",
+    "graphMode": "none",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "values": false
+    }
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 19,
+   "type": "timeseries",
+   "title": "Applications per Day",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 35
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT date_trunc('day', date_applied::timestamp) AS time, count(*) AS applied FROM applications GROUP BY 1 ORDER BY 1",
+     "format": "time_series"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "drawStyle": "bars",
+      "fillOpacity": 60
+     },
+     "color": {
+      "fixedColor": "blue",
+      "mode": "fixed"
+     }
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 20,
+   "type": "barchart",
+   "title": "Applications per Week",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 6,
+    "x": 12,
+    "y": 35
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT to_char(date_trunc('week', date_applied::timestamp), 'MM-DD') AS week, count(*) AS applied FROM applications GROUP BY date_trunc('week', date_applied::timestamp) ORDER BY date_trunc('week', date_applied::timestamp)",
+     "format": "table"
+    }
+   ],
+   "options": {
+    "xField": "week",
+    "legend": {
+     "displayMode": "hidden"
+    }
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "fixedColor": "blue",
+      "mode": "fixed"
+     }
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 21,
+   "type": "barchart",
+   "title": "Applications per Month",
+   "datasource": {
+    "type": "grafana-postgresql-datasource",
+    "uid": "efhodcyj56o00f"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 6,
+    "x": 18,
+    "y": 35
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "efhodcyj56o00f"
+     },
+     "rawSql": "SELECT to_char(date_trunc('month', date_applied::timestamp), 'YYYY-MM') AS month, count(*) AS applied FROM applications GROUP BY date_trunc('month', date_applied::timestamp) ORDER BY date_trunc('month', date_applied::timestamp)",
+     "format": "table"
+    }
+   ],
+   "options": {
+    "xField": "month",
+    "legend": {
+     "displayMode": "hidden"
+    }
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "fixedColor": "green",
+      "mode": "fixed"
+     }
+    },
+    "overrides": []
+   }
+  }
+ ],
+ "tags": [
+  "jobs",
+  "career"
+ ]
+}
