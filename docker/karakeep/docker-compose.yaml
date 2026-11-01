@@ -1,0 +1,64 @@
+# Karakeep (read-later, owner's choice) + Meilisearch + headless Chrome for crawling.
+# Ported from k3s (personal/karakeep, meilisearch, chrome), 2026-11-01. Data on the VM's SSD.
+# The k3s chrome pod never started (gcr.io/zenika-hub stopped serving the image), so links
+# were saved without page crawls; this stack uses the same image from Docker Hub.
+name: karakeep
+
+services:
+  karakeep:
+    # The k3s pod ran this exact build (SERVER_VERSION=nightly); pinned by digest so the
+    # database isn't opened by an older release. Move to a release tag deliberately.
+    image: ghcr.io/karakeep-app/karakeep@sha256:988b183aab649d2dfbd52194a7fabe21f7352c6a00032205d2dd60468dc972c6
+    container_name: karakeep
+    restart: unless-stopped
+    ports:
+      - "3010:3000"   # 3000 is Forgejo's on utility
+    environment:
+      - TZ=Australia/Sydney
+      - DATA_DIR=/data
+      - MEILI_ADDR=http://meilisearch:7700
+      - BROWSER_WEB_URL=http://chrome:9222
+      - NEXTAUTH_URL=https://karakeep.${BASE_DOMAIN:?set BASE_DOMAIN in .env}
+      - NEXTAUTH_SECRET=${KARAKEEP_NEXTAUTH_SECRET:?set KARAKEEP_NEXTAUTH_SECRET in .env}
+      - APP_SECRET_KEY=${KARAKEEP_APP_SECRET_KEY:?set KARAKEEP_APP_SECRET_KEY in .env}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:?set OLLAMA_BASE_URL in .env}
+      - INFERENCE_TEXT_MODEL=gemma3:12b
+      - SMTP_PASSWORD=${KARAKEEP_SMTP_PASSWORD:-}
+      - MAX_UPLOAD_GB=5
+    volumes:
+      - ${KARAKEEP_DATA_PATH:?set KARAKEEP_DATA_PATH in .env}/web:/data
+    depends_on: [meilisearch, chrome]
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.11.1
+    container_name: karakeep-meilisearch
+    restart: unless-stopped
+    environment:
+      - MEILI_NO_ANALYTICS=true
+    volumes:
+      - ${KARAKEEP_DATA_PATH}/meilisearch:/meili_data
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  chrome:
+    image: zenika/alpine-chrome:124
+    container_name: karakeep-chrome
+    restart: unless-stopped
+    command:
+      - --no-sandbox
+      - --disable-gpu
+      - --disable-dev-shm-usage
+      - --remote-debugging-address=0.0.0.0
+      - --remote-debugging-port=9222
+      - --hide-scrollbars
+      - --js-flags=--max-old-space-size=128
+    deploy:
+      resources:
+        limits:
+          memory: 1G
