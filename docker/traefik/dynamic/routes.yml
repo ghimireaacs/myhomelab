@@ -53,6 +53,9 @@ http:
     wiki:
       rule: "Host(`wiki.{{ $d }}`)"
       service: wiki
+    paperless:
+      rule: "Host(`paperless.{{ $d }}`)"
+      service: paperless
     immich:
       rule: "Host(`immich.{{ $d }}`)"
       service: immich
@@ -125,6 +128,8 @@ http:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:3010"}]}
     wiki:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:8093"}]}
+    paperless:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8000"}]}
     immich:
       loadBalancer: {servers: [{url: "http://{{ $gpu }}:2283"}]}
     jellyfin:
