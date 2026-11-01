@@ -68,6 +68,10 @@ http:
     grafana:
       rule: "Host(`grafana.{{ $d }}`)"
       service: grafana
+    semaphore:
+      rule: "Host(`ansible.{{ $d }}`)"
+      service: semaphore
+      middlewares: [lan-only]
     navidrome:
       rule: "Host(`music.{{ $d }}`)"
       service: navidrome
@@ -166,6 +170,8 @@ http:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:9000"}]}
     grafana:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:3001"}]}
+    semaphore:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:3002"}]}
     navidrome:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:4533"}]}
     music app:
