@@ -65,6 +65,9 @@ http:
     authentik:
       rule: "Host(`auth.{{ $d }}`)"
       service: authentik
+    grafana:
+      rule: "Host(`grafana.{{ $d }}`)"
+      service: grafana
     navidrome:
       rule: "Host(`music.{{ $d }}`)"
       service: navidrome
@@ -161,6 +164,8 @@ http:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:8094"}]}
     authentik:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:9000"}]}
+    grafana:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:3001"}]}
     navidrome:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:4533"}]}
     music app:

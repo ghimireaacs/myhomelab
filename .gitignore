@@ -44,3 +44,6 @@ docker/jellyfin/
 # Not ready for public
 docker/resume-service/
 docker/job-fetcher/CHANGELOG.md
+
+# Rendered from prometheus.yml.tmpl with real targets
+docker/monitoring/prometheus/prometheus.yml
