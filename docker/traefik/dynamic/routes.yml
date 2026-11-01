@@ -9,7 +9,9 @@ Not ported on purpose:
            90_Backups/forgejo)
   backend down on 2026-11-01: portainer (:9443), uptime (Uptime Kuma), resume (RxResume)
   owner-managed: the download-chain routes
-Apps still on k3s fall through to the "k3s-fallback" router at the bottom.
+  monitoring leftovers: graphite, sitespeed (retired 2026-11-02)
+The k3s-fallback router was removed on 2026-11-02 once every kept app ran on Compose;
+unknown hosts now get Traefik's 404.
 */ -}}
 {{- $d := env "BASE_DOMAIN" -}}
 {{- $utility := env "UTILITY_IP" -}}
@@ -128,13 +130,6 @@ http:
       service: api@internal
       middlewares: [lan-only]
 
-    # Everything not matched above goes to the old k3s Traefik, which still serves the
-    # apps on the cluster. Remove when k3s is retired.
-    k3s-fallback:
-      rule: 'HostRegexp(`^.+\.{{ $d | replace "." "\\." }}$`)'
-      priority: 1
-      service: k3s-traefik
-
   services:
     glance:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:8090"}]}
@@ -202,13 +197,8 @@ http:
       loadBalancer:
         servers: [{url: "https://{{ env "PROXMOX_IP" }}:8006"}]
         serversTransport: self-signed
-    k3s-traefik:
-      loadBalancer:
-        passHostHeader: true
-        servers: [{url: "https://{{ env "K3S_TRAEFIK_IP" }}"}]
-        serversTransport: self-signed
 
   serversTransports:
-    # Proxmox and the old k3s Traefik present certificates this proxy can't verify by IP.
+    # Proxmox presents a self-signed certificate.
     self-signed:
       insecureSkipVerify: true

@@ -1,8 +1,6 @@
 # Traefik v3: the homelab reverse proxy, replacing the k3s Traefik + cert-manager + MetalLB.
 # One wildcard certificate (*.example.xyz and the apex) through Cloudflare DNS-01.
 # Routes to other hosts live in dynamic/routes.yml; containers on this VM can use labels.
-# Apps still on k3s are reached through a low-priority fallback to the old Traefik
-# (dynamic/routes.yml, router "k3s-fallback") until each one moves.
 #
 # After editing dynamic/*.yml run `docker restart traefik`: this folder is on NFS, where
 # the file provider's change watching gets no events, so edits are not picked up live.
@@ -55,7 +53,6 @@ services:
       - PIHOLE_IP=${PIHOLE_IP:?set PIHOLE_IP in .env}
       - TRUENAS_IP=${TRUENAS_IP:?set TRUENAS_IP in .env}
       - PROXMOX_IP=${PROXMOX_IP:?set PROXMOX_IP in .env}
-      - K3S_TRAEFIK_IP=${K3S_TRAEFIK_IP:?set K3S_TRAEFIK_IP in .env}
     ports:
       - "80:80"
       - "443:443"
