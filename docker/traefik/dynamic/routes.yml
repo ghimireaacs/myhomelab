@@ -62,6 +62,22 @@ http:
     yamtrack:
       rule: "Host(`yamtrack.{{ $d }}`)"
       service: yamtrack
+    navidrome:
+      rule: "Host(`music.{{ $d }}`)"
+      service: navidrome
+      middlewares: [lan-only]
+    music app:
+      rule: "Host(`music app.{{ $d }}`)"
+      service: music app
+      middlewares: [lan-only]
+    tv app:
+      rule: "Host(`tv app.{{ $d }}`)"
+      service: tv app
+      middlewares: [lan-only]
+    ytdl:
+      rule: "Host(`yt.{{ $d }}`)"
+      service: ytdl
+      middlewares: [lan-only]
     immich:
       rule: "Host(`immich.{{ $d }}`)"
       service: immich
@@ -140,6 +156,14 @@ http:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:3456"}]}
     yamtrack:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:8094"}]}
+    navidrome:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:4533"}]}
+    music app:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8686"}]}
+    tv app:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8989"}]}
+    ytdl:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8888"}]}
     immich:
       loadBalancer: {servers: [{url: "http://{{ $gpu }}:2283"}]}
     jellyfin:
