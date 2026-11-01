@@ -62,6 +62,9 @@ http:
     yamtrack:
       rule: "Host(`yamtrack.{{ $d }}`)"
       service: yamtrack
+    authentik:
+      rule: "Host(`auth.{{ $d }}`)"
+      service: authentik
     navidrome:
       rule: "Host(`music.{{ $d }}`)"
       service: navidrome
@@ -156,6 +159,8 @@ http:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:3456"}]}
     yamtrack:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:8094"}]}
+    authentik:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:9000"}]}
     navidrome:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:4533"}]}
     music app:
