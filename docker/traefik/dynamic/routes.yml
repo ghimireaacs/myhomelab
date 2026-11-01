@@ -43,6 +43,12 @@ http:
     ytnotify:
       rule: "Host(`ytnotify.{{ $d }}`)"
       service: ytnotify
+    wallos:
+      rule: "Host(`wallos.{{ $d }}`)"
+      service: wallos
+    actual-budget:
+      rule: "Host(`budget.{{ $d }}`)"
+      service: actual-budget
     immich:
       rule: "Host(`immich.{{ $d }}`)"
       service: immich
@@ -109,6 +115,10 @@ http:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:5000"}]}
     ytnotify:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:8767"}]}
+    wallos:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8092"}]}
+    actual-budget:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:5006"}]}
     immich:
       loadBalancer: {servers: [{url: "http://{{ $gpu }}:2283"}]}
     jellyfin:

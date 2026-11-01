@@ -1,0 +1,20 @@
+# Wallos: subscription tracker. Ported from k3s (personal/wallos), 2026-11-01.
+# SQLite database and logos on the VM's local SSD (owned by uid 82, the image's www-data).
+name: wallos
+
+services:
+  wallos:
+    image: bellamy/wallos:5.10.3
+    container_name: wallos
+    restart: unless-stopped
+    ports:
+      - "8092:80"
+    environment:
+      - TZ=Australia/Sydney
+    volumes:
+      - ${WALLOS_DATA_PATH:?set WALLOS_DATA_PATH in .env}/db:/var/www/html/db
+      - ${WALLOS_DATA_PATH}/logos:/var/www/html/images/uploads/logos
+    deploy:
+      resources:
+        limits:
+          memory: 256M
