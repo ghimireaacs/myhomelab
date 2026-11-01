@@ -3,6 +3,9 @@
 # Routes to other hosts live in dynamic/routes.yml; containers on this VM can use labels.
 # Apps still on k3s are reached through a low-priority fallback to the old Traefik
 # (dynamic/routes.yml, router "k3s-fallback") until each one moves.
+#
+# After editing dynamic/*.yml run `docker restart traefik`: this folder is on NFS, where
+# the file provider's change watching gets no events, so edits are not picked up live.
 name: traefik
 
 services:
