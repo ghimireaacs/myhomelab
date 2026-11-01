@@ -1,0 +1,20 @@
+# The wiki (Quartz static site from the mydocs repo), served by nginx.
+# Ported from k3s (personal/wiki), 2026-11-01. The image is built on this VM by ./build.sh
+# from the committed mydocs content; no registry. Re-run ./build.sh after pushing wiki edits.
+name: wiki
+
+services:
+  wiki:
+    image: mydocs-wiki:local
+    pull_policy: never
+    container_name: wiki
+    restart: unless-stopped
+    ports:
+      - "8093:80"
+    labels:
+      # Built locally: Watchtower must not try to pull it.
+      - com.centurylinklabs.watchtower.enable=false
+    deploy:
+      resources:
+        limits:
+          memory: 128M
