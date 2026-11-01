@@ -52,6 +52,9 @@ http:
     karakeep:
       rule: "Host(`karakeep.{{ $d }}`)"
       service: karakeep
+    wiki:
+      rule: "Host(`wiki.{{ $d }}`)"
+      service: wiki
     immich:
       rule: "Host(`immich.{{ $d }}`)"
       service: immich
@@ -124,6 +127,8 @@ http:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:5006"}]}
     karakeep:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:3010"}]}
+    wiki:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8093"}]}
     immich:
       loadBalancer: {servers: [{url: "http://{{ $gpu }}:2283"}]}
     jellyfin:
