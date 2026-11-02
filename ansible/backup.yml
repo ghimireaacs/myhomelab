@@ -53,18 +53,20 @@
     - name: Dump each database
       # POSTGRES_USER is read from inside the container, so no credentials are
       # duplicated here and none end up in the repo.
+      # Literal block, one line: the old folded (>-) block kept a newline before
+      # "|| mysqldump" inside the quotes, sh saw a syntax error, and
+      # failed_when: false hid it, so no database was dumped (found 2026-11-02).
       ansible.builtin.shell:
-        cmd: >-
-          set -o pipefail;
-          docker exec {{ item }} sh -c
-          'pg_dumpall -U "$POSTGRES_USER" 2>/dev/null
-           || mysqldump --all-databases -u root -p"$MYSQL_ROOT_PASSWORD"'
-          | gzip -c
-          > {{ backup_root }}/{{ inventory_hostname }}/databases/{{ item }}-{{ ansible_date_time.date }}.sql.gz
+        cmd: |
+          set -o pipefail
+          docker exec {{ item }} sh -c 'if command -v pg_dumpall >/dev/null 2>&1; then pg_dumpall -U "$POSTGRES_USER"; else mysqldump --all-databases -u root -p"$MYSQL_ROOT_PASSWORD"; fi' | gzip -c > "{{ backup_root }}/{{ inventory_hostname }}/databases/{{ item }}-{{ ansible_date_time.date }}.sql.gz"
         executable: /bin/bash
       loop: "{{ db_containers.stdout_lines | default([]) }}"
       register: db_dump
-      failed_when: false
+      # A failed dump is reported (shows as "ignored" in the recap) but doesn't stop
+      # the other databases or hosts.
+      failed_when: db_dump.rc != 0
+      ignore_errors: true
       changed_when: db_dump.rc == 0
 
     - name: Discard dumps that came out empty
@@ -89,7 +91,8 @@
           tar czf /backup/{{ item }}-{{ ansible_date_time.date }}.tar.gz -C /src .
       loop: "{{ backup_volumes | default([]) }}"
       register: vol_backup
-      failed_when: false
+      failed_when: vol_backup.rc != 0
+      ignore_errors: true
       changed_when: vol_backup.rc == 0
 
     # ---------- local paths ----------
@@ -99,13 +102,16 @@
         cmd: >-
           set -o pipefail;
           tar czf
-          {{ backup_root }}/{{ inventory_hostname }}/paths/{{ item | basename }}-{{ ansible_date_time.date }}.tar.gz
+          {{ backup_root }}/{{ inventory_hostname }}/paths/{{ item | regex_replace('^/home/ghost/', '') | replace('/', '_') }}-{{ ansible_date_time.date }}.tar.gz
           -C {{ item | dirname }} {{ item | basename }}
         executable: /bin/bash
+      # Named by the path (karakeep_web, paperless_data): two folders that share a
+      # basename such as "data" or "web" no longer overwrite each other.
       loop: "{{ backup_paths | default([]) }}"
       become: true
       register: path_backup
-      failed_when: false
+      failed_when: path_backup.rc != 0
+      ignore_errors: true
       changed_when: path_backup.rc == 0
 
     # ---------- retention ----------
