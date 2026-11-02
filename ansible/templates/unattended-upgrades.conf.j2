@@ -1,0 +1,10 @@
+// Managed by ansible/baseline.yml. Security updates only, no automatic reboot:
+// reboots are planned (update.yml -e do_reboot=true) so they never hit at a bad time.
+Unattended-Upgrade::Allowed-Origins {
+        "${distro_id}:${distro_codename}-security";
+        "${distro_id}ESMApps:${distro_codename}-apps-security";
+        "${distro_id}ESM:${distro_codename}-infra-security";
+};
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
+Unattended-Upgrade::Remove-Unused-Dependencies "true";
+Unattended-Upgrade::Automatic-Reboot "false";
