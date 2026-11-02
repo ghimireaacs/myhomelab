@@ -1,0 +1,174 @@
+---
+# Baseline every Linux host should meet. Safe to re-run; built from a survey of the live
+# hosts on 2026-11-02 (see wiki guides/homelab-hardening).
+#
+#   ansible-playbook baseline.yml --limit <host> --check --diff   # see what would change
+#   ansible-playbook baseline.yml --limit <host>
+#   ansible-playbook baseline.yml --limit utility -e baseline_restart_docker=true
+#
+# Guard rails:
+#   - SSH password login is only switched off after key login for the remote user is
+#     confirmed, so a run can't lock you out.
+#   - Extra login users and listening ports are reported, never removed.
+#   - Docker's daemon.json is written but Docker is NOT restarted unless
+#     baseline_restart_docker=true (a restart stops every container briefly).
+#   - The Wazuh agent needs an enrolment password, so it stays a separate playbook:
+#     install-wazuh-agent.yml.
+
+- name: Linux baseline
+  hosts: "{{ target | default('linux') }}"
+  become: true
+  gather_facts: true
+
+  vars:
+    baseline_timezone: Australia/Sydney
+    baseline_journal_max: 500M
+    baseline_journal_retention: 1month
+    # Pi-hole and the Proxmox hosts are reached as root by key; everything else as ghost.
+    baseline_permit_root_login: "{{ 'prohibit-password' if ansible_user | default('ghost') == 'root' or 'proxmox' in group_names else 'no' }}"
+    baseline_keys_user: "{{ ansible_user | default('ghost') }}"
+    # Start additive. Set true once the key list in files/ is confirmed complete:
+    # then any key not in the list is removed.
+    baseline_keys_exclusive: false
+    baseline_restart_docker: false
+    baseline_expected_users: [root, ghost]
+
+  handlers:
+    - name: Reload sshd
+      ansible.builtin.service:
+        name: "{{ 'ssh' if ansible_os_family == 'Debian' else 'sshd' }}"
+        state: reloaded
+
+    - name: Restart journald
+      ansible.builtin.systemd:
+        name: systemd-journald
+        state: restarted
+
+  tasks:
+    # ---------- packages and time ----------
+    - name: Base packages
+      ansible.builtin.apt:
+        name: [curl, ca-certificates, git, htop, unattended-upgrades, needrestart]
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Guest agent on VMs (lets Proxmox shut down and report cleanly)
+      when: "'docker_vms' in group_names"
+      block:
+        - ansible.builtin.apt: {name: qemu-guest-agent, state: present}
+        - ansible.builtin.systemd: {name: qemu-guest-agent, enabled: true, state: started}
+
+    - name: Timezone
+      community.general.timezone:
+        name: "{{ baseline_timezone }}"
+
+    - name: Periodic TRIM (thin-provisioned disks give space back)
+      ansible.builtin.systemd:
+        name: fstrim.timer
+        enabled: true
+        state: started
+
+    # ---------- SSH ----------
+    - name: Managed authorized keys for {{ baseline_keys_user }}
+      ansible.posix.authorized_key:
+        user: "{{ baseline_keys_user }}"
+        key: "{{ lookup('ansible.builtin.file', 'files/authorized_keys.ghost') }}"
+        exclusive: "{{ baseline_keys_exclusive }}"
+        state: present
+
+    # Lockout guard: this play only gets here over SSH if key login already works for
+    # this user (no password is configured anywhere in this repo). If a password was
+    # supplied, key login isn't proven, so don't switch passwords off.
+    - name: Key login is proven for this connection
+      ansible.builtin.assert:
+        that:
+          - ansible_connection | default('ssh') == 'local' or ansible_password is not defined
+          - ansible_connection | default('ssh') == 'local' or ansible_ssh_pass is not defined
+        fail_msg: >-
+          This run used a password, so key login for {{ baseline_keys_user }} isn't proven.
+          Install a key first (jarvis-key/), then re-run.
+
+    - name: Key-only SSH drop-in
+      ansible.builtin.template:
+        src: templates/sshd-baseline.conf.j2
+        dest: /etc/ssh/sshd_config.d/10-baseline.conf
+        mode: "0644"
+        validate: sshd -t -f %s
+      notify: Reload sshd
+
+    # ---------- logs ----------
+    - name: Cap the journal
+      ansible.builtin.copy:
+        dest: /etc/systemd/journald.conf.d/10-baseline.conf
+        content: "{{ lookup('ansible.builtin.template', 'templates/journald-baseline.conf.j2') }}"
+        mode: "0644"
+      notify: Restart journald
+
+    # ---------- updates ----------
+    - name: Security-only unattended upgrades, no auto-reboot (not on Proxmox)
+      when: "'proxmox' not in group_names"
+      block:
+        - ansible.builtin.template:
+            src: templates/unattended-upgrades.conf.j2
+            dest: /etc/apt/apt.conf.d/52-baseline-unattended
+            mode: "0644"
+        - ansible.builtin.copy:
+            dest: /etc/apt/apt.conf.d/20auto-upgrades
+            mode: "0644"
+            content: |
+              APT::Periodic::Update-Package-Lists "1";
+              APT::Periodic::Unattended-Upgrade "1";
+
+    # ---------- Docker (docker_vms only) ----------
+    - name: Docker daemon settings
+      when: "'docker_vms' in group_names"
+      block:
+        - name: Write daemon.json (log rotation, /24 pools, live-restore; never a TCP socket)
+          ansible.builtin.copy:
+            dest: /etc/docker/daemon.json
+            mode: "0644"
+            backup: true
+            content: "{{ docker_daemon_base | combine(docker_daemon_extra | default({}), recursive=true) | to_nice_json }}\n"
+          register: daemon_json
+
+        - name: Refuse an exposed Docker API
+          ansible.builtin.assert:
+            that: "'hosts' not in (docker_daemon_base | combine(docker_daemon_extra | default({})))"
+            fail_msg: "daemon.json must not define hosts (an unauthenticated tcp:// socket is root on the VM)."
+
+        - name: Restart Docker only when asked
+          ansible.builtin.systemd:
+            name: docker
+            state: restarted
+          when: daemon_json.changed and baseline_restart_docker | bool
+
+        - name: Say a restart is pending
+          ansible.builtin.debug:
+            msg: "daemon.json changed on {{ inventory_hostname }}; re-run with -e baseline_restart_docker=true in a quiet window."
+          when: daemon_json.changed and not baseline_restart_docker | bool
+
+    # ---------- report, never change ----------
+    - name: Login-capable users
+      ansible.builtin.shell: "awk -F: '$7 !~ /(nologin|false|sync)$/ {print $1}' /etc/passwd"
+      register: login_users
+      changed_when: false
+      check_mode: false   # read-only; also report during --check
+
+    - name: Ports listening on all interfaces
+      ansible.builtin.shell: "ss -ltnH | awk '{print $4}' | grep -vE '^(127\\.|\\[::1\\])' | sed -E 's/.*://' | sort -un | tr '\\n' ' '"
+      register: open_ports
+      changed_when: false
+      check_mode: false
+
+    - name: Reboot needed?
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_flag
+
+    - name: Report
+      ansible.builtin.debug:
+        msg:
+          - "unexpected login users: {{ login_users.stdout_lines | difference(baseline_expected_users) }}"
+          - "listening on all interfaces: {{ open_ports.stdout }}"
+          - "reboot required: {{ reboot_flag.stat.exists }}"

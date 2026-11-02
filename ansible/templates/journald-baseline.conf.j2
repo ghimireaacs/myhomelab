@@ -1,0 +1,5 @@
+# Managed by ansible/baseline.yml. Cap the journal so it can't fill a small root disk.
+[Journal]
+Storage=persistent
+SystemMaxUse={{ baseline_journal_max }}
+MaxRetentionSec={{ baseline_journal_retention }}

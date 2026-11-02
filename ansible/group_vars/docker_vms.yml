@@ -9,4 +9,17 @@ compose_search_dirs:
   - "{{ repo_root }}/myhomelab/docker"
 
 compose_extra_stacks:
-  - "{{ repo_root }}/tools/yt-notify"
+  - "{{ repo_root }}/bots/yt-notify"
+
+# baseline.yml: Docker daemon settings every Docker VM gets. Host-specific keys (DNS,
+# the NVIDIA runtime) go in host_vars as docker_daemon_extra and are merged in.
+docker_daemon_base:
+  log-driver: json-file
+  log-opts:
+    max-size: "10m"
+    max-file: "3"
+  # /24 per network instead of /16 or /20: the defaults ran out on utility (2026-11-02).
+  default-address-pools:
+    - base: 10.201.0.0/16
+      size: 24
+  live-restore: true
