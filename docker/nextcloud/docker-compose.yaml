@@ -18,7 +18,9 @@ services:
       - redis:/data
       
   nextcloud:
-    image: nextcloud:latest
+    # Pinned to the installed major (35.0.2.2): Nextcloud can't skip majors, and :latest
+    # would jump when the image is re-pulled. Upgrade one major at a time on purpose.
+    image: nextcloud:35
     container_name: nextcloud
     restart: unless-stopped
     ports:
