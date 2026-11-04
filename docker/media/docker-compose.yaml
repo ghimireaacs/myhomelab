@@ -1,8 +1,8 @@
-# Media stack (owner, 2026-11-01): Navidrome (music server, Subsonic API for Music Assistant
+# Media stack (owner, 2026-11-01; movie app added 2026-11-05): Navidrome (music server, Subsonic API for Music Assistant
 # and phone apps), music app (music library management) and tv app (TV library management), plus
 # youtube-dl-server moved from k3s (personal/ytdl).
 #
-# music app and tv app are deployed bare: no indexers and no download clients are configured
+# music app, tv app and movie app are deployed bare: no indexers and no download clients are configured
 # here. music app imports files dropped in the music incoming folder and files them into the
 # library.
 #
@@ -65,6 +65,26 @@ services:
     volumes:
       - ${MEDIA_CONFIG_PATH}/tv app:/config
       - ${TV_LIBRARY_PATH:?set TV_LIBRARY_PATH in .env}:/tv
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  # Added 2026-11-05: organises the existing movie library (same folder Jellyfin reads).
+  # Like music app and tv app, no indexers or download clients are configured.
+  movie app:
+    image: lscr.io/linuxserver/movie app:6.4.4
+    container_name: movie app
+    restart: unless-stopped
+    ports:
+      - "7878:7878"
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=Australia/Sydney
+    volumes:
+      - ${MEDIA_CONFIG_PATH}/movie app:/config
+      - ${MOVIES_LIBRARY_PATH:?set MOVIES_LIBRARY_PATH in .env}:/movies
     deploy:
       resources:
         limits:

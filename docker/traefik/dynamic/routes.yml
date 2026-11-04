@@ -87,6 +87,10 @@ http:
       rule: "Host(`tv app.{{ $d }}`)"
       service: tv app
       middlewares: [lan-only]
+    movie app:
+      rule: "Host(`movie app.{{ $d }}`)"
+      service: movie app
+      middlewares: [lan-only]
     ytdl:
       rule: "Host(`yt.{{ $d }}`)"
       service: ytdl
@@ -174,6 +178,8 @@ http:
       loadBalancer: {servers: [{url: "http://{{ $media }}:8686"}]}
     tv app:
       loadBalancer: {servers: [{url: "http://{{ $media }}:8989"}]}
+    movie app:
+      loadBalancer: {servers: [{url: "http://{{ $media }}:7878"}]}
     ytdl:
       loadBalancer: {servers: [{url: "http://{{ $media }}:8888"}]}
     immich:

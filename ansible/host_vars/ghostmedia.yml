@@ -7,12 +7,14 @@ backup_paths:
   - /home/ghost/media/navidrome     # navidrome.db (users, play counts, playlists)
   - /home/ghost/media/music app        # music app.db + config.xml
   - /home/ghost/media/tv app        # tv app.db + config.xml
+  - /home/ghost/media/movie app        # movie app.db + config.xml
 
 # SQLite written live: paused for the seconds their folders are archived.
 backup_pause_containers:
   - navidrome
   - music app
   - tv app
+  - movie app
 
 docker_daemon_extra:
   dns: ["10.10.10.1", "1.1.1.1"]
