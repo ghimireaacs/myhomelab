@@ -1,12 +1,46 @@
 ---
-# Databases are found automatically (see backup.yml). Listed here is only the
-# state that lives on this VM's local disk and would otherwise be lost with it.
+# Databases are found automatically (see backup.yml): mattermost-postgres,
+# authentik-postgres and semaphore-postgres are dumped by image match.
+# Listed here is only the state that lives on this VM's local disk and would
+# otherwise be lost with it.
 
 backup_volumes:
   - mattermost_mattermost_data      # uploaded files
   - mattermost_mattermost_config    # config.json, including settings not in .env
   - mattermost_mattermost_plugins
-  - forgejo_forgejo-runner-data     # runner registration
 
+# App data moved off k3s onto the SSD on 2026-11-01/02 (SQLite and app state).
+# Postgres data folders are NOT listed: their logical dumps are the backup.
 backup_paths:
-  - /home/ghost/forgejo             # every self-hosted git repository
+  - /home/ghost/traefik/letsencrypt # ACME account + wildcard cert
+  - /home/ghost/glance
+  - /home/ghost/wallos
+  - /home/ghost/actual-budget       # budget files + bank-sync cache
+  - /home/ghost/karakeep/web        # db.db, queue.db, assets (meilisearch is rebuildable)
+  - /home/ghost/paperless/data      # db.sqlite3, index, classifier (documents are on NFS)
+  - /home/ghost/vikunja
+  - /home/ghost/yamtrack
+  # media (navidrome, music app, tv app) moved to ghostmedia 2026-11-04: host_vars/ghostmedia.yml
+  - /home/ghost/authentik/media
+  - /home/ghost/authentik/certs
+  - /home/ghost/monitoring/grafana  # grafana.db (dashboards are also in git)
+  - /home/ghost/monitoring/graphite # TrueNAS history
+  - /home/ghost/forgejo             # retired 2026-11-02; kept until the final archive is confirmed
+
+# Paused for the seconds their folders are archived (SQLite written live; a copy taken
+# mid-write can be inconsistent). backup.yml always unpauses them afterwards.
+backup_pause_containers:
+  - glance
+  - wallos
+  - actual-budget
+  - karakeep
+  - paperless
+  - vikunja
+  - yamtrack
+  - grafana
+  - graphite
+
+# Merged into docker_daemon_base by baseline.yml
+docker_daemon_extra:
+  dns: ["10.10.10.1", "1.1.1.1"]
+  dns-opts: ["ndots:0"]

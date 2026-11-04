@@ -1,0 +1,20 @@
+services:
+  siyuan:
+    image: b3log/siyuan:${SIYUAN_VERSION}
+    container_name: siyuan
+    # Since v3.7.0 the image needs the serve subcommand explicitly.
+    command: ["serve", "--workspace=/siyuan/workspace/"]
+    restart: unless-stopped
+    ports:
+      - "${SIYUAN_PORT}:6806"
+    environment:
+      TZ: Australia/Sydney
+      PUID: ${SIYUAN_UID}
+      PGID: ${SIYUAN_GID}
+      SIYUAN_ACCESS_AUTH_CODE: ${SIYUAN_ACCESS_AUTH_CODE}
+    volumes:
+      # Local disk only: SiYuan holds a live SQLite index and warns that
+      # sync disks can corrupt the workspace. Never point this at NFS.
+      - ${SIYUAN_WORKSPACE_PATH}:/siyuan/workspace
+    cpus: 1.0
+    mem_limit: 1g

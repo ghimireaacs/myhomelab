@@ -1,0 +1,78 @@
+# Paperless-ngx + Redis + Tika + Gotenberg. Ported from k3s (personal/paperless*), 2026-11-02.
+# Paperless uses SQLite (db.sqlite3 in its data folder; the k3s Postgres was never used and is
+# not ported). Data folder on the VM's SSD; documents, inbox and exports stay on the NAS.
+# Images pinned to the digests k3s ran.
+name: paperless
+
+services:
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx@sha256:1a08d8dfc2b51a08de09652dd86ad4d0c611c362382f944533ad38b73125fbc4
+    container_name: paperless
+    restart: unless-stopped
+    depends_on: [redis, tika, gotenberg]
+    ports:
+      - "8000:8000"
+    environment:
+      - USERMAP_UID=3000
+      - USERMAP_GID=3000
+      - PAPERLESS_SECRET_KEY=${PAPERLESS_SECRET_KEY:?set PAPERLESS_SECRET_KEY in .env}
+      - PAPERLESS_ADMIN_USER=${PAPERLESS_ADMIN_USER:-}
+      - PAPERLESS_ADMIN_PASSWORD=${PAPERLESS_ADMIN_PASSWORD:-}
+      - PAPERLESS_URL=https://paperless.${BASE_DOMAIN:?set BASE_DOMAIN in .env}
+      - PAPERLESS_CSRF_TRUSTED_ORIGINS=https://paperless.${BASE_DOMAIN}
+      - PAPERLESS_TIME_ZONE=Australia/Sydney
+      - PAPERLESS_OCR_LANGUAGE=eng
+      - PAPERLESS_REDIS=redis://redis:6379
+      - PAPERLESS_TIKA_ENABLED=true
+      - PAPERLESS_TIKA_ENDPOINT=http://tika:9998
+      - PAPERLESS_TIKA_GOTENBERG_ENDPOINT=http://gotenberg:3000
+      - PAPERLESS_TASK_WORKERS=1
+      - PAPERLESS_THREADS_PER_WORKER=1
+      - PAPERLESS_OCR_THREADS=1
+      - PAPERLESS_CONVERT_MEMORY_LIMIT=256
+      - PAPERLESS_CONSUMER_POLLING=1          # the inbox is on NFS: no inotify
+      - PAPERLESS_CONSUMER_RECURSIVE=true
+      - PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS=true
+      - PAPERLESS_FILENAME_FORMAT={document_type}/{created_year}/{title}
+    volumes:
+      - ${PAPERLESS_DATA_PATH:?set PAPERLESS_DATA_PATH in .env}:/usr/src/paperless/data
+      - ${PAPERLESS_MEDIA_PATH:?set PAPERLESS_MEDIA_PATH in .env}:/usr/src/paperless/media
+      - ${PAPERLESS_CONSUME_PATH:?set PAPERLESS_CONSUME_PATH in .env}:/usr/src/paperless/consume
+      - ${PAPERLESS_EXPORT_PATH:?set PAPERLESS_EXPORT_PATH in .env}:/usr/src/paperless/export
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  redis:
+    image: redis@sha256:a5995dfdf108997f8a7c9587f54fad5e94ed5848de5236a6b28119e99efd67e0
+    container_name: paperless-redis
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  tika:
+    image: apache/tika@sha256:b99f19c4fd76237dafe7d22f719b9bddfa9a449da687c597a41e2f6d9a595418
+    container_name: paperless-tika
+    restart: unless-stopped
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xmx128m -Xms64m
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  gotenberg:
+    image: gotenberg/gotenberg@sha256:bddd8ea9d076e2d08b6ddaa6efae6403185202c6dab65a6488ed0a6923d6d8e8
+    container_name: paperless-gotenberg
+    restart: unless-stopped
+    command:
+      - gotenberg
+      - --chromium-disable-javascript=true
+      - --chromium-allow-list=file:///tmp/.*
+    deploy:
+      resources:
+        limits:
+          memory: 512M

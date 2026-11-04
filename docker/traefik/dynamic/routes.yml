@@ -1,0 +1,209 @@
+{{- /*
+Routes to services on other hosts, and on this VM by host port. Ported from
+myK8S/externalServices and the k3s ingresses on 2026-11-01. Domain and IPs come from
+the container environment (see .env.example).
+
+Not ported on purpose:
+  retired: adminer, files (copyparty), whoami, home, rss, read, notes, audiobook,
+           kavita, lazylibrarian, git (Forgejo, stopped 2026-11-01; data archived in
+           90_Backups/forgejo)
+  backend down on 2026-11-01: portainer (:9443), uptime (Uptime Kuma), resume (RxResume)
+  owner-managed: the download-chain routes
+  monitoring leftovers: graphite, sitespeed (retired 2026-11-02)
+The k3s-fallback router was removed on 2026-11-02 once every kept app ran on Compose;
+unknown hosts now get Traefik's 404.
+*/ -}}
+{{- $d := env "BASE_DOMAIN" -}}
+{{- $utility := env "UTILITY_IP" -}}
+{{- $gpu := env "GHOSTGPU_IP" -}}
+{{- $media := env "GHOSTMEDIA_IP" -}}
+http:
+  routers:
+    glance:
+      rule: "Host(`{{ $d }}`)"
+      service: glance
+    dozzle:
+      rule: "Host(`dozzle.{{ $d }}`)"
+      service: dozzle
+      middlewares: [lan-only]
+    infra:
+      rule: "Host(`infra.{{ $d }}`)"
+      service: infra
+    mattermost:
+      rule: "Host(`mattermost.{{ $d }}`)"
+      service: mattermost
+    ntfy:
+      rule: "Host(`ntfy.{{ $d }}`)"
+      service: ntfy
+    radicale:
+      rule: "Host(`radicale.{{ $d }}`)"
+      service: radicale
+    shuttle:
+      rule: "Host(`shuttle.{{ $d }}`)"
+      service: shuttle
+    ytnotify:
+      rule: "Host(`ytnotify.{{ $d }}`)"
+      service: ytnotify
+    wallos:
+      rule: "Host(`wallos.{{ $d }}`)"
+      service: wallos
+    actual-budget:
+      rule: "Host(`budget.{{ $d }}`)"
+      service: actual-budget
+    karakeep:
+      rule: "Host(`karakeep.{{ $d }}`)"
+      service: karakeep
+    wiki:
+      rule: "Host(`wiki.{{ $d }}`)"
+      service: wiki
+    paperless:
+      rule: "Host(`paperless.{{ $d }}`)"
+      service: paperless
+    vikunja:
+      rule: "Host(`todo.{{ $d }}`)"
+      service: vikunja
+    yamtrack:
+      rule: "Host(`yamtrack.{{ $d }}`)"
+      service: yamtrack
+    authentik:
+      rule: "Host(`auth.{{ $d }}`)"
+      service: authentik
+    grafana:
+      rule: "Host(`grafana.{{ $d }}`)"
+      service: grafana
+    semaphore:
+      rule: "Host(`ansible.{{ $d }}`)"
+      service: semaphore
+      middlewares: [lan-only]
+    navidrome:
+      rule: "Host(`music.{{ $d }}`)"
+      service: navidrome
+      middlewares: [lan-only]
+    music app:
+      rule: "Host(`music app.{{ $d }}`)"
+      service: music app
+      middlewares: [lan-only]
+    tv app:
+      rule: "Host(`tv app.{{ $d }}`)"
+      service: tv app
+      middlewares: [lan-only]
+    ytdl:
+      rule: "Host(`yt.{{ $d }}`)"
+      service: ytdl
+      middlewares: [lan-only]
+    immich:
+      rule: "Host(`immich.{{ $d }}`)"
+      service: immich
+    jellyfin:
+      rule: "Host(`jellyfin.{{ $d }}`)"
+      service: jellyfin
+    n8n:
+      rule: "Host(`n8n.{{ $d }}`)"
+      service: n8n
+    ollama-api:
+      rule: "Host(`ai.{{ $d }}`)"
+      service: ollama-api
+      middlewares: [lan-only]
+    open-webui:
+      rule: "Host(`ollama.{{ $d }}`)"
+      service: open-webui
+    homeassistant:
+      rule: "Host(`ha.{{ $d }}`)"
+      service: homeassistant
+    nextcloud:
+      rule: "Host(`cloud.{{ $d }}`)"
+      service: nextcloud
+      middlewares: [nextcloud-headers, nextcloud-dav-redirect]
+    pihole:
+      rule: "Host(`pihole.{{ $d }}`)"
+      service: pihole
+      middlewares: [lan-only, pihole-admin-redirect]
+    truenas:
+      rule: "Host(`truenas.{{ $d }}`)"
+      service: truenas
+      middlewares: [lan-only]
+    proxmox:
+      rule: "Host(`proxmox.{{ $d }}`)"
+      service: proxmox
+      middlewares: [lan-only]
+    traefik-dashboard:
+      rule: "Host(`traefik.{{ $d }}`)"
+      service: api@internal
+      middlewares: [lan-only]
+
+  services:
+    glance:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8090"}]}
+    dozzle:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8383"}]}
+    infra:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:1313"}]}
+    mattermost:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8065"}]}
+    ntfy:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:2586"}]}
+    radicale:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:5232"}]}
+    shuttle:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:5000"}]}
+    ytnotify:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8767"}]}
+    wallos:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8092"}]}
+    actual-budget:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:5006"}]}
+    karakeep:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:3010"}]}
+    wiki:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8093"}]}
+    paperless:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8000"}]}
+    vikunja:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:3456"}]}
+    yamtrack:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:8094"}]}
+    authentik:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:9000"}]}
+    grafana:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:3001"}]}
+    semaphore:
+      loadBalancer: {servers: [{url: "http://{{ $utility }}:3002"}]}
+    navidrome:
+      loadBalancer: {servers: [{url: "http://{{ $media }}:4533"}]}
+    music app:
+      loadBalancer: {servers: [{url: "http://{{ $media }}:8686"}]}
+    tv app:
+      loadBalancer: {servers: [{url: "http://{{ $media }}:8989"}]}
+    ytdl:
+      loadBalancer: {servers: [{url: "http://{{ $media }}:8888"}]}
+    immich:
+      loadBalancer: {servers: [{url: "http://{{ $gpu }}:2283"}]}
+    jellyfin:
+      loadBalancer: {servers: [{url: "http://{{ $gpu }}:8096"}]}
+    n8n:
+      loadBalancer: {servers: [{url: "http://{{ $gpu }}:5678"}]}
+    ollama-api:
+      loadBalancer: {servers: [{url: "http://{{ $gpu }}:11434"}]}
+    open-webui:
+      loadBalancer: {servers: [{url: "http://{{ $gpu }}:3000"}]}
+    homeassistant:
+      loadBalancer: {servers: [{url: "http://{{ env "HOMEASSISTANT_IP" }}:8123"}]}
+    nextcloud:
+      loadBalancer: {servers: [{url: "http://{{ env "NEXTCLOUD_IP" }}:8090"}]}
+    pihole:
+      # Pi-hole v6 answers 403 unless Host is its webserver.domain (pi.hole) or its IP:
+      # send the backend's IP as Host instead of pihole.<domain>.
+      loadBalancer:
+        servers: [{url: "http://{{ env "PIHOLE_IP" }}:80"}]
+        passHostHeader: false
+    truenas:
+      loadBalancer: {servers: [{url: "http://{{ env "TRUENAS_IP" }}:80"}]}
+    proxmox:
+      loadBalancer:
+        servers: [{url: "https://{{ env "PROXMOX_IP" }}:8006"}]
+        serversTransport: self-signed
+
+  serversTransports:
+    # Proxmox presents a self-signed certificate.
+    self-signed:
+      insecureSkipVerify: true

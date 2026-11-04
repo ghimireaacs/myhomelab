@@ -1,0 +1,38 @@
+---
+# Jarvis's SSH public key, added to or removed from every box.
+#
+#   ansible-playbook -i ../inventory.ini -i hosts.ini jarvis-key.yml
+#   ansible-playbook -i ../inventory.ini -i hosts.ini jarvis-key.yml -e key_state=absent
+#   ansible-playbook -i ../inventory.ini -i hosts.ini jarvis-key.yml -e target=proxmox
+#
+# Run from a host whose key is already authorised everywhere (workstation or Semaphore),
+# not from Jarvis: Jarvis is the box being let in.
+- name: Manage Jarvis SSH key
+  hosts: "{{ target | default('linux:proxmox:defence') }}"
+  become: true
+  gather_facts: false
+
+  vars:
+    key_state: present                   # present | absent
+    jarvis_pubkey: >-
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHOJ3vZu/tzL/f7vf/cViDqEDp3PFP/UYeOh1FMZNVqC jarvis@defence-box
+
+  tasks:
+    - name: Require a valid key_state
+      assert:
+        that: key_state in ['present', 'absent']
+        fail_msg: "key_state must be 'present' or 'absent'."
+      run_once: true
+      delegate_to: localhost
+      become: false
+
+    # The key goes to whichever account Ansible logs in as: ghost on VMs, root on
+    # Proxmox and the pihole LXC. That is the account Jarvis will use too.
+    # follow: on Proxmox, /root/.ssh/authorized_keys can be a symlink into /etc/pve;
+    # without follow the module would replace the link with a plain file.
+    - name: "Jarvis key {{ key_state }}"
+      ansible.posix.authorized_key:
+        user: "{{ ansible_user | default('ghost') }}"
+        key: "{{ jarvis_pubkey }}"
+        state: "{{ key_state }}"
+        follow: true

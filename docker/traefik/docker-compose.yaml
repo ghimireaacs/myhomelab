@@ -1,0 +1,79 @@
+# Traefik v3: the homelab reverse proxy, replacing the k3s Traefik + cert-manager + MetalLB.
+# One wildcard certificate (*.example.com and the apex) through Cloudflare DNS-01.
+# Routes to other hosts live in dynamic/routes.yml; containers on this VM can use labels.
+#
+# After editing dynamic/*.yml run `docker restart traefik`: this folder is on NFS, where
+# the file provider's change watching gets no events, so edits are not picked up live.
+name: traefik
+
+services:
+  traefik:
+    image: traefik:v3.7.17
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - --global.checkNewVersion=false
+      - --global.sendAnonymousUsage=false
+      - --log.level=INFO
+      - --accesslog=true
+      - --accesslog.format=json
+      - --accesslog.filepath=/logs/access.log
+      - --api.dashboard=true
+      - --ping=true
+      - --entrypoints.web.address=:80
+      # Drop headers that alias proxy-managed ones (X_Forwarded_For etc.), so backends
+      # can't be fed spoofed forwarding headers.
+      - --entrypoints.web.http.aliasheadersstrategy=delete
+      - --entrypoints.websecure.http.aliasheadersstrategy=delete
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.tls.certresolver=cloudflare
+      - --entrypoints.websecure.http.tls.domains[0].main=${BASE_DOMAIN:?set BASE_DOMAIN in .env}
+      - --entrypoints.websecure.http.tls.domains[0].sans=*.${BASE_DOMAIN}
+      - --entrypoints.websecure.http.middlewares=secure-headers@file
+      - --certificatesresolvers.cloudflare.acme.email=${ACME_EMAIL:?set ACME_EMAIL in .env}
+      - --certificatesresolvers.cloudflare.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1:53,1.0.0.1:53
+      - --providers.file.directory=/dynamic
+      - --providers.file.watch=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=proxy
+    environment:
+      - TZ=Australia/Sydney
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN:?set CF_DNS_API_TOKEN in .env}
+      # Read by the {{ env }} templates in dynamic/*.yml
+      - BASE_DOMAIN=${BASE_DOMAIN}
+      - UTILITY_IP=${UTILITY_IP:?set UTILITY_IP in .env}
+      - GHOSTGPU_IP=${GHOSTGPU_IP:?set GHOSTGPU_IP in .env}
+      - GHOSTMEDIA_IP=${GHOSTMEDIA_IP:?set GHOSTMEDIA_IP in .env}
+      - HOMEASSISTANT_IP=${HOMEASSISTANT_IP:?set HOMEASSISTANT_IP in .env}
+      - NEXTCLOUD_IP=${NEXTCLOUD_IP:?set NEXTCLOUD_IP in .env}
+      - PIHOLE_IP=${PIHOLE_IP:?set PIHOLE_IP in .env}
+      - TRUENAS_IP=${TRUENAS_IP:?set TRUENAS_IP in .env}
+      - PROXMOX_IP=${PROXMOX_IP:?set PROXMOX_IP in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./dynamic:/dynamic:ro
+      - ${TRAEFIK_DATA_PATH:?set TRAEFIK_DATA_PATH in .env}/letsencrypt:/letsencrypt
+      - ${TRAEFIK_DATA_PATH}/logs:/logs
+    networks:
+      - proxy
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+networks:
+  proxy:
+    name: proxy

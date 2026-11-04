@@ -1,0 +1,24 @@
+# Glance: the homelab start page (owner's choice of dashboard, 31 Oct 2026).
+# Ported from k3s (personal/glance) to Compose on utility, stage 1 of the k3s retirement.
+# Config and assets stay on the NAS so the YAML can be edited in place; runtime data is on
+# the VM's local SSD.
+name: glance
+
+services:
+  glance:
+    image: glanceapp/glance:v0.8.7
+    container_name: glance
+    restart: unless-stopped
+    ports:
+      - "8090:8080"   # 8080 is cAdvisor's on every Docker VM
+    environment:
+      - TZ=Australia/Sydney
+      - MY_SECRET_TOKEN=${GLANCE_SECRET_TOKEN:?set GLANCE_SECRET_TOKEN in .env}
+    volumes:
+      - ${GLANCE_CONFIG_PATH:?set GLANCE_CONFIG_PATH in .env}:/app/config
+      - ${GLANCE_ASSETS_PATH:?set GLANCE_ASSETS_PATH in .env}:/app/assets
+      - ${GLANCE_DATA_PATH:?set GLANCE_DATA_PATH in .env}:/app/data
+    deploy:
+      resources:
+        limits:
+          memory: 128M
