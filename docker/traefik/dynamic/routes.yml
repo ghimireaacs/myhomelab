@@ -16,6 +16,7 @@ unknown hosts now get Traefik's 404.
 {{- $d := env "BASE_DOMAIN" -}}
 {{- $utility := env "UTILITY_IP" -}}
 {{- $gpu := env "GHOSTGPU_IP" -}}
+{{- $media := env "GHOSTMEDIA_IP" -}}
 http:
   routers:
     glance:
@@ -168,13 +169,13 @@ http:
     semaphore:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:3002"}]}
     navidrome:
-      loadBalancer: {servers: [{url: "http://{{ $utility }}:4533"}]}
+      loadBalancer: {servers: [{url: "http://{{ $media }}:4533"}]}
     music app:
-      loadBalancer: {servers: [{url: "http://{{ $utility }}:8686"}]}
+      loadBalancer: {servers: [{url: "http://{{ $media }}:8686"}]}
     tv app:
-      loadBalancer: {servers: [{url: "http://{{ $utility }}:8989"}]}
+      loadBalancer: {servers: [{url: "http://{{ $media }}:8989"}]}
     ytdl:
-      loadBalancer: {servers: [{url: "http://{{ $utility }}:8888"}]}
+      loadBalancer: {servers: [{url: "http://{{ $media }}:8888"}]}
     immich:
       loadBalancer: {servers: [{url: "http://{{ $gpu }}:2283"}]}
     jellyfin:

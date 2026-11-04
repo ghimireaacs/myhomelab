@@ -1,0 +1,90 @@
+---
+# Create a VM from the node's docker-template, as declared in vars/vms.yml.
+#
+#   ./run.sh proxmox-vm.yml -e vm=ghostmedia
+#   ./run.sh baseline.yml --limit ghostmedia          # then the usual baseline
+#
+# SSH keys are fetched from github.com/ghimireaacs.keys at clone time (plus Jarvis's key,
+# which Ansible needs), so a key added on GitHub reaches every new VM.
+# Never touches an existing VMID: re-running on a created VM only reports it.
+
+- name: Clone a VM from docker-template
+  hosts: proxmox
+  become: true
+  gather_facts: false
+
+  vars_files: [vars/vms.yml]
+  vars:
+    github_user: ghimireaacs
+    gateway: 10.10.10.1
+    dns: 10.10.10.1
+    spec: "{{ vms[vm] }}"
+
+  tasks:
+    - name: Which VM
+      ansible.builtin.assert:
+        that: [vm is defined, vm in vms]
+        fail_msg: "Pass -e vm=<name from vars/vms.yml>"
+      run_once: true
+
+    - name: Only on the VM's node
+      ansible.builtin.meta: end_host
+      when: inventory_hostname != spec.node
+
+    - name: Already exists?
+      ansible.builtin.command: qm config {{ spec.vmid }}
+      register: existing
+      changed_when: false
+      failed_when: false
+
+    - name: Leave an existing VM alone
+      ansible.builtin.debug:
+        msg: "VMID {{ spec.vmid }} exists ({{ (existing.stdout | regex_search('name: .*')) }}); nothing to do."
+      when: existing.rc == 0
+
+    - name: Create
+      when: existing.rc != 0
+      block:
+        - name: The template is there
+          ansible.builtin.shell: "qm config {{ spec.template }} | grep -q '^template: 1'"
+          changed_when: false
+
+        - name: Keys from GitHub + Jarvis
+          ansible.builtin.set_fact:
+            vm_keys: >-
+              {{ ((lookup('ansible.builtin.url', 'https://github.com/' ~ github_user ~ '.keys', wantlist=True) | select('match', '^ssh-') | list)
+                  + (lookup('ansible.builtin.file', 'files/authorized_keys.ghost').splitlines() | select('search', 'jarvis@') | list))
+                 | unique }}
+
+        - name: Keys are present
+          ansible.builtin.assert:
+            that: vm_keys | length > 1
+
+        - name: Key file for cloud-init (one key per line)
+          ansible.builtin.copy:
+            dest: "/root/vm-{{ spec.vmid }}.pub"
+            mode: "0600"
+            content: "{{ vm_keys | join('\n') }}\n"
+
+        - name: Clone and configure
+          ansible.builtin.shell: |
+            set -e
+            qm clone {{ spec.template }} {{ spec.vmid }} --name {{ vm }} --full 1 --storage {{ spec.storage }}
+            qm set {{ spec.vmid }} --cores {{ spec.cores }} --memory {{ spec.memory }} --balloon 0 \
+              --ipconfig0 ip={{ spec.ip }}/24,gw={{ gateway }} --nameserver {{ dns }} \
+              --sshkeys /root/vm-{{ spec.vmid }}.pub --onboot 1 \
+              --tags {{ spec.tags | join(',') }} --description "{{ spec.description | default('') }}"
+            qm resize {{ spec.vmid }} scsi0 {{ spec.disk }}
+            qm start {{ spec.vmid }}
+            rm -f /root/vm-{{ spec.vmid }}.pub
+
+        - name: Wait for SSH
+          ansible.builtin.wait_for: {host: "{{ spec.ip }}", port: 22, timeout: 300}
+          delegate_to: localhost
+          become: false
+
+        - name: Next
+          ansible.builtin.debug:
+            msg: >-
+              {{ vm }} is up on {{ spec.ip }}. Add it to inventory.ini [docker_vms], then
+              ./run.sh baseline.yml --limit {{ vm }}

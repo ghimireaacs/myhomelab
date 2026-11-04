@@ -1,0 +1,336 @@
+---
+# Build (or rebuild) the Docker VM template on one Proxmox node.
+#
+#   ./run.sh proxmox-template.yml -e node=homeservertoo -e template_id=268
+#   ./run.sh proxmox-template.yml -e node=homeserver -e template_id=168 \
+#       -e template_storage=wdstorageHDD -e template_replace=true
+#
+# Templates live on node-local storage, which can't be cloned across nodes, so each node
+# that creates VMs has its own copy (homeserver 168, homeservertoo 268), built the same way.
+#
+# What a clone gets (the 2026-11 baseline, docs: lab-notebook "Ansible → A new VM"):
+#   - Ubuntu 26.04 LTS cloud image, CPU type x86-64-v2-AES (runs on both nodes:
+#     the HP's i7-3770 has no AVX2, so x86-64-v3 VMs can't start there)
+#   - user ghost, SSH keys from github.com/ghimireaacs.keys + Jarvis (Ansible control node),
+#     key-only SSH, no root login, no password set anywhere
+#   - Docker CE + compose; daemon.json with log rotation, /24 address pools, live-restore
+#   - journald capped, security-only unattended upgrades, fstrim, guest agent, Sydney time
+#   - the NAS in /etc/fstab (/home/ghost/ghostsilo, nofail + automount)
+#   - agents: node-exporter :9100, cAdvisor :8080, Dozzle agent :7007 (pinned versions)
+# After cloning, run baseline.yml as usual (it is idempotent and catches drift).
+#
+# The build VM boots once on build_ip, is provisioned over SSH from here, then cloud-init,
+# machine-id and SSH host keys are wiped so every clone gets its own identity.
+
+- name: Create the build VM from the cloud image
+  hosts: "{{ node }}"
+  become: true
+  gather_facts: false
+
+  vars:
+    template_name: docker-template
+    template_storage: local-lvm
+    template_replace: false
+    template_disk: 16G
+    build_ip: 10.10.10.198
+    gateway: 10.10.10.1
+    dns: 10.10.10.1
+    image_name: resolute-server-cloudimg-amd64.img
+    image_base: https://cloud-images.ubuntu.com/resolute/current
+    image_dir: /var/lib/vz/cloudimg
+    github_user: ghimireaacs
+
+  tasks:
+    - name: Required variables
+      ansible.builtin.assert:
+        that: [node is defined, template_id is defined]
+        fail_msg: "Pass -e node=<proxmox host> -e template_id=<vmid>"
+
+    - name: Keys from GitHub (fetched now, baked into the template)
+      ansible.builtin.set_fact:
+        github_keys: "{{ lookup('ansible.builtin.url', 'https://github.com/' ~ github_user ~ '.keys', wantlist=True) | select('match', '^ssh-') | list }}"
+        jarvis_keys: "{{ lookup('ansible.builtin.file', 'files/authorized_keys.ghost').splitlines() | select('search', 'jarvis@') | list }}"
+      delegate_to: localhost
+      become: false
+
+    - name: Keys are present
+      ansible.builtin.assert:
+        that: [github_keys | length > 0, jarvis_keys | length > 0]
+        fail_msg: "No GitHub keys for {{ github_user }} or no Jarvis key in files/authorized_keys.ghost"
+
+    - name: Key file for cloud-init
+      ansible.builtin.copy:
+        dest: "/root/template-{{ template_id }}.pub"
+        content: "{{ (github_keys + jarvis_keys) | unique | join('\n') }}\n"
+        mode: "0600"
+
+    - name: Image folder
+      ansible.builtin.file: {path: "{{ image_dir }}", state: directory, mode: "0755"}
+
+    - name: Ubuntu cloud image (checksum-verified)
+      ansible.builtin.get_url:
+        url: "{{ image_base }}/{{ image_name }}"
+        dest: "{{ image_dir }}/{{ image_name }}"
+        checksum: "sha256:{{ image_base }}/SHA256SUMS"
+        mode: "0644"
+        force: true   # re-download when upstream publishes a new build (checksum decides)
+
+    - name: Is the VMID in use?
+      ansible.builtin.command: qm config {{ template_id }}
+      register: existing
+      changed_when: false
+      failed_when: false
+
+    - name: Refuse to touch a VMID unless replacing a template of the same name
+      ansible.builtin.assert:
+        that:
+          - template_replace | bool
+          - "'template: 1' in existing.stdout"
+          - "('name: ' ~ template_name) in existing.stdout or ('name: ' ~ template_name ~ '-build') in existing.stdout"
+        fail_msg: >-
+          VMID {{ template_id }} exists and is not a {{ template_name }} template being replaced
+          (template_replace={{ template_replace }}). Pick another ID or pass template_replace=true.
+      when: "existing.rc == 0 and ('name: ' ~ template_name ~ '-build') not in existing.stdout"
+
+    - name: Remove the old template (or a failed build)
+      ansible.builtin.shell: |
+        qm stop {{ template_id }} --skiplock 1 >/dev/null 2>&1 || true
+        qm destroy {{ template_id }} --purge 1 --destroy-unreferenced-disks 1
+      when: existing.rc == 0
+
+    - name: Create the build VM
+      ansible.builtin.shell: |
+        set -e
+        qm create {{ template_id }} --name {{ template_name }}-build --ostype l26 \
+          --cpu x86-64-v2-AES --cores 2 --memory 2048 --balloon 0 \
+          --scsihw virtio-scsi-single --net0 virtio,bridge=vmbr0,firewall=1 \
+          --agent enabled=1,fstrim_cloned_disks=1 --serial0 socket --vga serial0
+        qm set {{ template_id }} --scsi0 {{ template_storage }}:0,import-from={{ image_dir }}/{{ image_name }},discard=on,ssd=1,iothread=1
+        qm resize {{ template_id }} scsi0 {{ template_disk }}
+        qm set {{ template_id }} --ide2 {{ template_storage }}:cloudinit --boot order=scsi0 \
+          --ciuser ghost --sshkeys /root/template-{{ template_id }}.pub \
+          --ipconfig0 ip={{ build_ip }}/24,gw={{ gateway }} --nameserver {{ dns }}
+        qm start {{ template_id }}
+
+    - name: Wait for SSH on the build VM
+      ansible.builtin.wait_for:
+        host: "{{ build_ip }}"
+        port: 22
+        timeout: 300
+      delegate_to: localhost
+      become: false
+
+    - name: Provision it next
+      ansible.builtin.add_host:
+        name: template-build
+        ansible_host: "{{ build_ip }}"
+        ansible_user: ghost
+        groups: [template_build]
+
+- name: Provision the template contents
+  hosts: template_build
+  become: true
+  gather_facts: false
+
+  vars:
+    agents:
+      node_exporter: prom/node-exporter:v1.12.1
+      cadvisor: gcr.io/cadvisor/cadvisor:v0.55.1
+      dozzle: amir20/dozzle:v11.4.0
+    docker_daemon:
+      log-driver: json-file
+      log-opts: {max-size: "10m", max-file: "3"}
+      default-address-pools: [{base: 10.201.0.0/16, size: 24}]
+      live-restore: true
+    baseline_journal_max: 500M
+    baseline_journal_retention: 1month
+    baseline_permit_root_login: "no"
+
+  tasks:
+    - name: Wait for cloud-init's first boot to finish
+      ansible.builtin.command: cloud-init status --wait
+      changed_when: false
+      failed_when: false
+
+    - name: Facts
+      ansible.builtin.setup:
+
+    - name: Up to date
+      ansible.builtin.apt:
+        upgrade: dist
+        update_cache: true
+
+    - name: Base packages
+      ansible.builtin.apt:
+        name: [qemu-guest-agent, nfs-common, curl, ca-certificates, git, htop, jq, rsync,
+               unattended-upgrades, needrestart]
+        state: present
+
+    - name: Docker apt key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Docker apt repo
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/docker.list
+        content: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable\n"
+        mode: "0644"
+
+    - name: Docker CE
+      ansible.builtin.apt:
+        name: [docker-ce, docker-ce-cli, containerd.io, docker-buildx-plugin, docker-compose-plugin]
+        update_cache: true
+
+    - name: Docker daemon settings (never a TCP socket)
+      ansible.builtin.copy:
+        dest: /etc/docker/daemon.json
+        content: "{{ docker_daemon | to_nice_json }}\n"
+        mode: "0644"
+
+    - name: ghost can use Docker
+      ansible.builtin.user: {name: ghost, groups: docker, append: true}
+
+    - name: Services on
+      ansible.builtin.systemd: {name: "{{ item }}", enabled: true, state: restarted}
+      loop: [docker, qemu-guest-agent, fstrim.timer]
+
+    - name: Timezone
+      community.general.timezone: {name: Australia/Sydney}
+
+    - name: Key-only SSH
+      ansible.builtin.template:
+        src: templates/sshd-baseline.conf.j2
+        dest: /etc/ssh/sshd_config.d/10-baseline.conf
+        mode: "0644"
+        validate: sshd -t -f %s
+
+    - name: Journal drop-in folder (not present on the cloud image)
+      ansible.builtin.file: {path: /etc/systemd/journald.conf.d, state: directory, mode: "0755"}
+
+    - name: Journal cap
+      ansible.builtin.copy:
+        dest: /etc/systemd/journald.conf.d/10-baseline.conf
+        content: "{{ lookup('ansible.builtin.template', 'templates/journald-baseline.conf.j2') }}"
+        mode: "0644"
+
+    - name: Security-only unattended upgrades
+      ansible.builtin.template:
+        src: templates/unattended-upgrades.conf.j2
+        dest: /etc/apt/apt.conf.d/52-baseline-unattended
+        mode: "0644"
+
+    - name: Unattended upgrades on
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        mode: "0644"
+        content: |
+          APT::Periodic::Update-Package-Lists "1";
+          APT::Periodic::Unattended-Upgrade "1";
+
+    - name: NAS mount point
+      ansible.builtin.file: {path: /home/ghost/ghostsilo, state: directory, owner: ghost, group: ghost, mode: "0755"}
+
+    - name: NAS in fstab (boots without the NAS; mounts on first access)
+      ansible.posix.mount:
+        path: /home/ghost/ghostsilo
+        src: 10.10.10.200:/mnt/ghostdata/ghostsilo
+        fstype: nfs
+        opts: _netdev,nofail,x-systemd.automount,x-systemd.mount-timeout=30
+        state: present
+
+    - name: Agents folder
+      ansible.builtin.file: {path: /opt/docker-services, state: directory, mode: "0755"}
+
+    - name: Agents compose file
+      ansible.builtin.copy:
+        dest: /opt/docker-services/docker-compose.yaml
+        mode: "0644"
+        content: |
+          # Baked into docker-template by ansible/proxmox-template.yml. Every clone runs these.
+          name: agents
+          services:
+            node-exporter:
+              image: {{ agents.node_exporter }}
+              container_name: node-exporter
+              restart: unless-stopped
+              pid: host
+              ports: ["9100:9100"]
+              command: [--path.rootfs=/rootfs]
+              volumes: ["/:/rootfs:ro,rslave"]
+            cadvisor:
+              image: {{ agents.cadvisor }}
+              container_name: cadvisor
+              restart: unless-stopped
+              command: [--housekeeping_interval=30s, --docker_only=true]
+              ports: ["8080:8080"]
+              volumes:
+                - /:/rootfs:ro
+                - /var/run:/var/run:ro
+                - /sys:/sys:ro
+                - /var/lib/docker/:/var/lib/docker:ro
+            dozzle-agent:
+              image: {{ agents.dozzle }}
+              container_name: dozzle-agent
+              restart: unless-stopped
+              command: agent
+              ports: ["7007:7007"]
+              volumes: ["/var/run/docker.sock:/var/run/docker.sock:ro"]
+
+    - name: Agents pulled and created
+      ansible.builtin.command: docker compose up -d
+      args: {chdir: /opt/docker-services}
+
+    - name: Build stamp
+      ansible.builtin.copy:
+        dest: /etc/homelab-template
+        mode: "0644"
+        content: |
+          docker-template built {{ now(utc=true).strftime('%Y-%m-%d %H:%M UTC') }} by ansible/proxmox-template.yml
+          base: Ubuntu {{ ansible_distribution_version }} ({{ ansible_distribution_release }}) cloud image
+          agents: {{ agents.values() | join(', ') }}
+
+    - name: Wipe per-machine identity and shut down
+      ansible.builtin.shell: |
+        set -e
+        apt-get clean
+        rm -f /var/lib/docker/engine-id
+        rm -f /etc/ssh/ssh_host_*
+        cloud-init clean --logs --seed --machine-id
+        rm -f /home/ghost/.bash_history /root/.bash_history
+        fstrim -av || true
+        sync
+        (sleep 2; systemctl poweroff) >/dev/null 2>&1 &
+      async: 30
+      poll: 0
+
+- name: Convert to a template
+  hosts: "{{ node }}"
+  become: true
+  gather_facts: false
+
+  vars:
+    template_name: docker-template
+
+  tasks:
+    - name: Wait for the build VM to stop
+      ansible.builtin.command: qm status {{ template_id }}
+      register: st
+      until: "'stopped' in st.stdout"
+      retries: 60
+      delay: 5
+      changed_when: false
+
+    - name: Template it
+      ansible.builtin.shell: |
+        set -e
+        qm set {{ template_id }} --name {{ template_name }} --ipconfig0 ip=dhcp \
+          --tags template,ubuntu-26-04,docker \
+          --description "Built $(date +%F) by myhomelab/ansible/proxmox-template.yml. Ubuntu 26.04, Docker, baseline, agents. Keys: github.com/ghimireaacs + Jarvis."
+        qm template {{ template_id }}
+        rm -f /root/template-{{ template_id }}.pub
+
+    - name: Done
+      ansible.builtin.debug:
+        msg: "{{ template_name }} is VMID {{ template_id }} on {{ inventory_hostname }}. Clone it with proxmox-vm.yml."
