@@ -24,8 +24,14 @@
   tasks:
     - name: Require the enrolment password
       assert:
-        that: wazuh_enrol_pass | length > 0
-        fail_msg: "Set WAZUH_ENROL_PASS in the environment first."
+        that:
+          - wazuh_enrol_pass | length > 0
+          # catches a sudo prompt captured along with the password (ssh -t ... sudo cat)
+          - "'sudo' not in wazuh_enrol_pass and wazuh_enrol_pass is not search('\\s')"
+        fail_msg: >-
+          WAZUH_ENROL_PASS is empty or looks wrong (contains 'sudo' or whitespace). Read it hidden with
+          zsh: read -rs '?Wazuh enrolment password: ' WAZUH_ENROL_PASS; export WAZUH_ENROL_PASS
+          bash: read -rsp 'Wazuh enrolment password: ' WAZUH_ENROL_PASS; export WAZUH_ENROL_PASS
       run_once: true
       delegate_to: localhost
       become: false
@@ -120,10 +126,29 @@
         replace: '\g<1>{{ wazuh_group }}\g<2>'
       register: group_conf
 
+    - name: Already enrolled?
+      shell: "grep -q ' {{ inventory_hostname }} ' /var/ossec/etc/client.keys"
+      register: enrolled
+      changed_when: false
+      failed_when: false
+
+    # The package writes authd.pass only on first install; write it on every unenrolled run
+    # so a re-run with the right password fixes a wrong one.
+    - name: Enrolment password for this run
+      copy:
+        dest: /var/ossec/etc/authd.pass
+        content: "{{ wazuh_enrol_pass }}"
+        owner: root
+        group: wazuh
+        mode: "0640"
+      register: pass_file
+      no_log: true
+      when: enrolled.rc != 0
+
     - name: Start agent
       systemd:
         name: wazuh-agent
-        state: "{{ 'restarted' if (group_conf.changed or addr_conf.changed) else 'started' }}"
+        state: "{{ 'restarted' if (group_conf.changed or addr_conf.changed or pass_file.changed) else 'started' }}"
         enabled: yes
         daemon_reload: yes
 
