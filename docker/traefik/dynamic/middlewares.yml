@@ -17,6 +17,9 @@ http:
         sourceRange:
           - 10.10.0.0/16
           - 172.16.0.0/12
+          # Docker's fallback pools on utility (172.16/12 pools exhausted): e.g. Glance is on
+          # 192.168.48.0/20 and its monitors got 403. No VLAN uses 192.168 and nothing is forwarded.
+          - 192.168.0.0/16
           - 127.0.0.1/32
 
     # Ported from the k3s middlewares (external-infra/*)

@@ -190,7 +190,11 @@ http:
     nextcloud:
       loadBalancer: {servers: [{url: "http://{{ env "NEXTCLOUD_IP" }}:8090"}]}
     pihole:
-      loadBalancer: {servers: [{url: "http://{{ env "PIHOLE_IP" }}:80"}]}
+      # Pi-hole v6 answers 403 unless Host is its webserver.domain (pi.hole) or its IP:
+      # send the backend's IP as Host instead of pihole.<domain>.
+      loadBalancer:
+        servers: [{url: "http://{{ env "PIHOLE_IP" }}:80"}]
+        passHostHeader: false
     truenas:
       loadBalancer: {servers: [{url: "http://{{ env "TRUENAS_IP" }}:80"}]}
     proxmox:
