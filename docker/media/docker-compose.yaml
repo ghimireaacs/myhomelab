@@ -53,7 +53,8 @@ services:
           memory: 768M
 
   tv app:
-    image: lscr.io/linuxserver/tv app:4.0.20
+    # develop channel (owner, 2026-11-05): newest pre-release; DB upgrade is one-way, back up first
+    image: lscr.io/linuxserver/tv app:develop
     container_name: tv app
     restart: unless-stopped
     ports:
@@ -73,7 +74,8 @@ services:
   # Added 2026-11-05: organises the existing movie library (same folder Jellyfin reads).
   # Like music app and tv app, no indexers or download clients are configured.
   movie app:
-    image: lscr.io/linuxserver/movie app:6.4.4
+    # develop channel (owner, 2026-11-05): newest pre-release; DB upgrade is one-way, back up first
+    image: lscr.io/linuxserver/movie app:develop
     container_name: movie app
     restart: unless-stopped
     ports:
