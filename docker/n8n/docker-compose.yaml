@@ -23,6 +23,12 @@ services:
       - N8N_LOG_LEVEL=warn
       - N8N_COMMUNITY_PACKAGES_ENABLED=true
       - N8N_RUNNERS_ENABLED=false
+      # Run history: keep 7 days / 5,000 runs, and compact SQLite at start (2026-11-05: the
+      # database had grown to 6.3 GB of failed runs from the retired job pipeline).
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=168
+      - EXECUTIONS_DATA_PRUNE_MAX_COUNT=5000
+      - DB_SQLITE_VACUUM_ON_STARTUP=true
     volumes:
       - ${N8N_DATA_PATH}:/home/node/.n8n
       - ${N8N_FILES_PATH}:/files
