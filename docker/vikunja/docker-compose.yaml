@@ -1,0 +1,24 @@
+# Vikunja (tasks). Ported from k3s (personal/vikunja), 2026-11-02, with its data as-is
+# (seek-sweep and the Claude API token write to it). SQLite + attachments on the VM's SSD.
+name: vikunja
+
+services:
+  vikunja:
+    image: vikunja/vikunja:2.3.0
+    container_name: vikunja
+    restart: unless-stopped
+    ports:
+      - "3456:3456"
+    environment:
+      - TZ=Australia/Sydney
+      - VIKUNJA_SERVICE_JWTSECRET=${VIKUNJA_JWT_SECRET:?set VIKUNJA_JWT_SECRET in .env}
+      - VIKUNJA_SERVICE_PUBLICURL=https://todo.${BASE_DOMAIN:?set BASE_DOMAIN in .env}
+      - VIKUNJA_DATABASE_TYPE=sqlite
+      - VIKUNJA_DATABASE_PATH=/data/vikunja.db
+      - VIKUNJA_FILES_BASEPATH=/data/files
+    volumes:
+      - ${VIKUNJA_DATA_PATH:?set VIKUNJA_DATA_PATH in .env}:/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M

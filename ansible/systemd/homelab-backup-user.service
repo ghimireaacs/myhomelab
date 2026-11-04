@@ -1,0 +1,25 @@
+# Nightly backup.yml from Jarvis (the control node holds the SSH key every host trusts).
+# User unit: Ansible runs in a container via run.sh, so no system install or sudo is needed.
+#
+#   mkdir -p ~/.config/systemd/user
+#   cp homelab-backup-user.service ~/.config/systemd/user/homelab-backup.service
+#   cp homelab-backup-user.timer   ~/.config/systemd/user/homelab-backup.timer
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now homelab-backup.timer
+#   loginctl enable-linger ghost      # run even when nobody is logged in
+#
+# The ansible path below is the main checkout; until feat/media-stack-utility is merged,
+# a drop-in (systemctl --user edit homelab-backup.service) points it at the worktree.
+
+[Unit]
+Description=Homelab backup: dump databases and local state to TrueNAS
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/ghostsilo/99_System/Claude Codes/myhomelab/ansible
+ExecStart=/bin/bash ./run.sh backup.yml
+TimeoutStartSec=2h
+Nice=10
+IOSchedulingClass=idle

@@ -1,3 +1,0 @@
----
-# k3s nodes mount the same TrueNAS export at a different path than the Docker VMs.
-backup_root: /mnt/ghostdata/ghostsilo/90_Backups/ansible

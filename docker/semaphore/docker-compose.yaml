@@ -1,0 +1,63 @@
+# Semaphore (Ansible UI, a learning tool). Ported from k3s (infra/semaphore), 2026-11-02.
+# Database moved with pg_dump/restore from the local-path Postgres; data on the VM's SSD.
+name: semaphore
+
+services:
+  postgres:
+    image: postgres@sha256:2586e2a95d1c9b31cb2967feb562948f7d364854453d703039b6efa45fe48417  # 16
+    container_name: semaphore-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=semaphore
+      - POSTGRES_USER=semaphore
+      - POSTGRES_PASSWORD=${SEMAPHORE_DB_PASSWORD:?set SEMAPHORE_DB_PASSWORD in .env}
+    volumes:
+      - ${SEMAPHORE_DATA_PATH:?set SEMAPHORE_DATA_PATH in .env}/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d semaphore -U semaphore"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  semaphore:
+    image: semaphoreui/semaphore@sha256:008dacd9f1adbd92e8a048f1786ae1dd9bed2a352aca2eb30b9837de5706e7f7
+    container_name: semaphore
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3002:3000"
+    environment:
+      - SEMAPHORE_DB_DIALECT=postgres
+      - SEMAPHORE_DB_HOST=postgres
+      - SEMAPHORE_DB_PORT=5432
+      - SEMAPHORE_DB=semaphore
+      - SEMAPHORE_DB_USER=semaphore
+      - SEMAPHORE_DB_PASS=${SEMAPHORE_DB_PASSWORD}
+      - SEMAPHORE_ADMIN=ghost
+      - SEMAPHORE_ADMIN_NAME=Ghost
+      - SEMAPHORE_ADMIN_PASSWORD=${SEMAPHORE_ADMIN_PASSWORD:?set SEMAPHORE_ADMIN_PASSWORD in .env}
+      - SEMAPHORE_ADMIN_EMAIL=${SEMAPHORE_ADMIN_EMAIL:?set SEMAPHORE_ADMIN_EMAIL in .env}
+      - SEMAPHORE_ACCESS_KEY_ENCRYPTION=${SEMAPHORE_ACCESS_KEY_ENCRYPTION:?set SEMAPHORE_ACCESS_KEY_ENCRYPTION in .env}
+      - SEMAPHORE_COOKIE_HASH=${SEMAPHORE_COOKIE_HASH:?set SEMAPHORE_COOKIE_HASH in .env}
+      - SEMAPHORE_COOKIE_ENCRYPTION=${SEMAPHORE_COOKIE_ENCRYPTION:?set SEMAPHORE_COOKIE_ENCRYPTION in .env}
+      - SEMAPHORE_TOTP_SECRET=${SEMAPHORE_TOTP_SECRET:-}
+      - TZ=Australia/Sydney
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+networks:
+  default:
+    # utility's Docker default address pools are used up (one /16 or /20 per stack); an
+    # explicit subnet doesn't need the pool. Long-term fix: default-address-pools with /24s.
+    ipam:
+      config:
+        - subnet: 172.16.10.0/24

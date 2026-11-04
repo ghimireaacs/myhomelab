@@ -1,0 +1,21 @@
+services:
+  nextdash:
+    image: ghcr.io/jordibrouwer/nextdash:${NEXTDASH_VERSION}
+    container_name: nextdash
+    restart: unless-stopped
+    user: "${NEXTDASH_UID}:${NEXTDASH_GID}"
+    entrypoint: ["/app/main"]
+    ports:
+      - "${NEXTDASH_PORT}:8080"
+    environment:
+      PORT: "8080"
+      NEXTDASH_DATA_DIR: /app/data
+      NEXTDASH_HOST_PROC: /host/proc
+      NEXTDASH_WRITE_TOKEN: ${NEXTDASH_WRITE_TOKEN}
+      DISABLE_TELEMETRY: "true"
+    volumes:
+      - ${NEXTDASH_DATA_PATH}:/app/data
+      - /proc:/host/proc:ro
+      - /etc/localtime:/etc/localtime:ro
+    cpus: 1.0
+    mem_limit: 256m

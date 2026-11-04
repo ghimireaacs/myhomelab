@@ -1,0 +1,13 @@
+# Schedule for homelab-backup.service (user unit). 05:30 Sydney (owner, 4 Nov): after PBS (22:00) and
+# TrueNAS Backrest -> B2 (01:00), clear of the 07:26/07:50 job timers.
+[Unit]
+Description=Nightly homelab backup
+
+[Timer]
+OnCalendar=*-*-* 05:30:00 Australia/Sydney
+RandomizedDelaySec=10m
+# Jarvis may sleep: run at the next wake/boot instead of skipping the day.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

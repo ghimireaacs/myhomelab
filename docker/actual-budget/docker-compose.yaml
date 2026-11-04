@@ -1,0 +1,47 @@
+# Actual Budget + Up Bank sync. Ported from k3s (personal/actual-budget and the
+# actual-budget-sync CronJob), 2026-11-01. Data on the VM's local SSD.
+#
+# The server runs all the time. The sync is a one-shot job started by the systemd timer in
+# ./systemd (07:00-21:00 every 2 hours, Sydney time, same as the old CronJob):
+#   docker compose --profile sync run --rm sync
+name: actual-budget
+
+services:
+  actual-budget:
+    image: actualbudget/actual-server:26.10.0
+    container_name: actual-budget
+    restart: unless-stopped
+    ports:
+      - "5006:5006"
+    environment:
+      - TZ=Australia/Sydney
+    volumes:
+      - ${ACTUAL_DATA_PATH:?set ACTUAL_DATA_PATH in .env}/server:/data
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  sync:
+    image: timsmart/actualbudget-sync:main
+    profiles: [sync]
+    depends_on: [actual-budget]
+    environment:
+      - TZ=Australia/Sydney
+      # Straight to the server on the compose network: no DNS or proxy dependency.
+      - ACTUAL_SERVER=http://actual-budget:5006
+      - ACTUAL_DATA=/data
+      - ACTUAL_SYNC_ID=${ACTUAL_SYNC_ID:?set ACTUAL_SYNC_ID in .env}
+      - ACTUAL_PASSWORD=${ACTUAL_PASSWORD:?set ACTUAL_PASSWORD in .env}
+      - UP_USER_TOKEN=${UP_USER_TOKEN:?set UP_USER_TOKEN in .env}
+    command:
+      - --bank
+      - up
+      - --accounts
+      - ${ACTUAL_ACCOUNT_MAP_1:?set ACTUAL_ACCOUNT_MAP_1 in .env}
+      - --accounts
+      - ${ACTUAL_ACCOUNT_MAP_2:?set ACTUAL_ACCOUNT_MAP_2 in .env}
+      - --sync-days
+      - "7"
+    volumes:
+      - ${ACTUAL_DATA_PATH}/sync:/data

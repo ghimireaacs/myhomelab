@@ -7,3 +7,10 @@ backup_paths:
 
 # Elasticsearch is deliberately excluded — it is a rebuildable index, and it is
 # large. If Postiz ever depends on it surviving, add it here.
+
+# Merged into docker_daemon_base by baseline.yml (GPU containers need this runtime)
+docker_daemon_extra:
+  runtimes:
+    nvidia:
+      path: nvidia-container-runtime
+      args: []

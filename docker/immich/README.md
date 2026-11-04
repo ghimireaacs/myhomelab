@@ -38,7 +38,7 @@ docker logs immich_machine_learning
 
 ## Backup
 
-Nightly at 3 AM → database dump saved to:
+Nightly at 23:00 (cron on ghostgpu) → database dump saved to:
 
 /home/ghost/ghostsilo/90_Backups/Immich/Database
 

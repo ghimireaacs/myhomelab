@@ -1,0 +1,9 @@
+[Unit]
+Description=Actual Budget: sync Up Bank transactions
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+# Set to the folder holding this stack's docker-compose.yaml (systemctl --user edit to override)
+WorkingDirectory=%h/ghostsilo/99_System/Claude Codes/myhomelab/docker/actual-budget
+ExecStart=/usr/bin/docker compose --profile sync run --rm sync

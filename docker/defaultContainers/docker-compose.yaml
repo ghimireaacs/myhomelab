@@ -23,6 +23,10 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
+    # Lower memory: 30s housekeeping instead of 1s, Docker containers only
+    command:
+      - --housekeeping_interval=30s
+      - --docker_only=true
     ports:
       - "8080:8080"
     volumes:
@@ -53,7 +57,7 @@ services:
     environment:
       - DOCKER_API_VERSION=1.54
       - TZ=Australia/Sydney
-      - WATCHTOWER_SCHEDULE=0 0 3 * * *
+      - WATCHTOWER_SCHEDULE=0 0 7 * * *
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_INCLUDE_STOPPED=false
       - WATCHTOWER_ROLLING_RESTART=false

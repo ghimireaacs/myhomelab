@@ -1,0 +1,72 @@
+# Authentik SSO (Grafana logs in through it). Ported from the k3s Helm release (infra/authentik),
+# 2026-11-02: same version and secret key; the database was moved with pg_dump/restore off
+# kubertwo's local disk. 2025.10 needs no Redis. Postgres data on the VM's local SSD.
+name: authentik
+
+services:
+  postgresql:
+    image: postgres:17.6-bookworm
+    container_name: authentik-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=authentik
+      - POSTGRES_USER=authentik
+      - POSTGRES_PASSWORD=${AUTHENTIK_POSTGRES_PASSWORD:?set AUTHENTIK_POSTGRES_PASSWORD in .env}
+    volumes:
+      - ${AUTHENTIK_DATA_PATH:?set AUTHENTIK_DATA_PATH in .env}/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d authentik -U authentik"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  server:
+    image: ghcr.io/goauthentik/server:2025.10.2
+    container_name: authentik-server
+    restart: unless-stopped
+    command: server
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    environment: &authentik-env
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?set AUTHENTIK_SECRET_KEY in .env}
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${AUTHENTIK_POSTGRES_PASSWORD}
+      AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+      AUTHENTIK_WEB__WORKERS: "1"
+      AUTHENTIK_WORKER__THREADS: "1"
+      TZ: Australia/Sydney
+    ports:
+      - "9000:9000"
+    volumes:
+      - ${AUTHENTIK_DATA_PATH}/media:/media
+      - ${AUTHENTIK_DATA_PATH}/templates:/templates
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  worker:
+    image: ghcr.io/goauthentik/server:2025.10.2
+    container_name: authentik-worker
+    restart: unless-stopped
+    command: worker
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    environment: *authentik-env
+    volumes:
+      - ${AUTHENTIK_DATA_PATH}/media:/media
+      - ${AUTHENTIK_DATA_PATH}/templates:/templates
+      - ${AUTHENTIK_DATA_PATH}/certs:/certs
+    deploy:
+      resources:
+        limits:
+          memory: 768M
