@@ -21,7 +21,7 @@ A homelab that replaced most of the SaaS a household pays for, rebuilt in Novemb
 |---|---|---|
 | Google Photos | Immich | [`docker/immich`](docker/immich) |
 | Google Drive | Nextcloud | [`docker/nextcloud`](docker/nextcloud) |
-| Spotify | Navidrome + music app | [`docker/media`](docker/media) |
+| Spotify | Navidrome | [`docker/media`](docker/media) |
 | YNAB | Actual Budget + bank sync | [`docker/actual-budget`](docker/actual-budget) |
 | Filing cabinet | Paperless-ngx (OCR, tags) | [`docker/paperless`](docker/paperless) |
 | Pocket | Karakeep | [`docker/karakeep`](docker/karakeep) |
@@ -46,8 +46,8 @@ A homelab that replaced most of the SaaS a household pays for, rebuilt in Novemb
                      ┌───────────────┘         │        └──────────────┐
           ┌──────────▼─────────┐  ┌────────────▼──────────┐  ┌─────────▼─────────┐
           │ utility            │  │ ghostmedia            │  │ ghostgpu          │
-          │ apps, monitoring   │  │ Navidrome, music app,    │  │ Immich, Ollama,   │
-          │ on the Ryzen       │  │ tv app, yt-dlp · HP   │  │ Jellyfin (GPU)    │
+          │ apps, monitoring   │  │ Navidrome, yt-dlp,    │  │ Immich, Ollama,   │
+          │ on the Ryzen       │  │ media apps · HP       │  │ Jellyfin (GPU)    │
           └──────────┬─────────┘  └────────────┬──────────┘  └─────────┬─────────┘
                      └──────── app state on each VM's SSD ─────────────┘
                                   files and media on TrueNAS (NFS)

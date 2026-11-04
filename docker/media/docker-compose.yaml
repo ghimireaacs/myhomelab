@@ -1,10 +1,6 @@
-# Media stack (owner, 2026-11-01; movie app added 2026-11-05): Navidrome (music server, Subsonic API for Music Assistant
-# and phone apps), music app (music library management) and tv app (TV library management), plus
-# youtube-dl-server moved from k3s (personal/ytdl).
-#
-# music app, tv app and movie app are deployed bare: no indexers and no download clients are configured
-# here. music app imports files dropped in the music incoming folder and files them into the
-# library.
+# Media stack (2026-11-01): Navidrome (music server, Subsonic API for Music Assistant and
+# phone apps) and youtube-dl-server, moved from k3s. Further services for this host can be added
+# in a local docker-compose.override.yaml, which compose merges automatically.
 #
 # App configs/databases on the VM's local SSD; libraries on the NAS.
 name: media
@@ -32,65 +28,6 @@ services:
       resources:
         limits:
           memory: 512M
-
-  music app:
-    image: lscr.io/linuxserver/music app:3.1.6
-    container_name: music app
-    restart: unless-stopped
-    ports:
-      - "8686:8686"
-    environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=Australia/Sydney
-    volumes:
-      - ${MEDIA_CONFIG_PATH}/music app:/config
-      - ${MUSIC_LIBRARY_PATH}:/music
-      - ${MUSIC_INCOMING_PATH:?set MUSIC_INCOMING_PATH in .env}:/incoming
-    deploy:
-      resources:
-        limits:
-          memory: 768M
-
-  tv app:
-    # develop channel (owner, 2026-11-05): newest pre-release; DB upgrade is one-way, back up first
-    image: lscr.io/linuxserver/tv app:develop
-    container_name: tv app
-    restart: unless-stopped
-    ports:
-      - "8989:8989"
-    environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=Australia/Sydney
-    volumes:
-      - ${MEDIA_CONFIG_PATH}/tv app:/config
-      - ${TV_LIBRARY_PATH:?set TV_LIBRARY_PATH in .env}:/tv
-    deploy:
-      resources:
-        limits:
-          memory: 768M
-
-  # Added 2026-11-05: organises the existing movie library (same folder Jellyfin reads).
-  # Like music app and tv app, no indexers or download clients are configured.
-  movie app:
-    # develop channel (owner, 2026-11-05): newest pre-release; DB upgrade is one-way, back up first
-    image: lscr.io/linuxserver/movie app:develop
-    container_name: movie app
-    restart: unless-stopped
-    ports:
-      - "7878:7878"
-    environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=Australia/Sydney
-    volumes:
-      - ${MEDIA_CONFIG_PATH}/movie app:/config
-      - ${MOVIES_LIBRARY_PATH:?set MOVIES_LIBRARY_PATH in .env}:/movies
-    deploy:
-      resources:
-        limits:
-          memory: 768M
 
   ytdl:
     image: nbr23/youtube-dl-server@sha256:3b367e203c5e477dd1b9d546031c761d8bc8c088518b1ec71675c4393e3feaf4

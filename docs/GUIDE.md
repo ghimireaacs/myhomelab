@@ -55,7 +55,7 @@ Any single folder in `docker/` runs alone on a host with Docker Engine and the c
 | Yamtrack | `yamtrack` | 8094 | `YAMTRACK_SECRET`, data path | bundled Redis |
 | Glance | `glance` | 8090 | config/assets/data paths | a `glance.yml` in the config path |
 | Radicale | `radicale` | 5232 | data path | — |
-| Navidrome + music app + tv app + movie app + yt-dlp | `media` | 4533, 8686, 8989, 7878, 8888 | config path, library paths | no indexers or download clients are configured |
+| Navidrome + yt-dlp | `media` | 4533, 8888 | config path, library paths | no indexers or download clients are configured |
 | Immich | `immich` | 2283 | `UPLOAD_LOCATION`, `DB_DATA_LOCATION` (local!), DB password | bundled Postgres, Redis, ML |
 | Nextcloud | `nextcloud` | `NEXTCLOUD_PORT` | admin, trusted domains, the data paths | bundled Postgres, Redis |
 | Ollama + Open WebUI | `Ollama` | 11434, 3000 | the two data paths | an NVIDIA GPU + container toolkit for speed |
@@ -126,7 +126,6 @@ Each is path A, plus a route in `routes.yml`. Points that bite:
 
 - **Paperless** on an NFS inbox needs `PAPERLESS_CONSUMER_POLLING=1` (already set).
 - **Immich** `DB_DATA_LOCATION` must be local disk. Back it up with `docker/immich/backup-postgres.sh`.
-- **Media**: music app and tv app have no login until first run: set *Settings → General → Authentication* straight away.
 - **Karakeep** crawls pages with the bundled Chrome; `OLLAMA_BASE_URL` is optional.
 - **n8n** is the one public app, through `cloudflareTunnel`. Nothing else needs a port forward.
 

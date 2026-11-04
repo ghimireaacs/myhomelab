@@ -20,7 +20,7 @@ backup_paths:
   - /home/ghost/paperless/data      # db.sqlite3, index, classifier (documents are on NFS)
   - /home/ghost/vikunja
   - /home/ghost/yamtrack
-  # media (navidrome, music app, tv app) moved to ghostmedia 2026-11-04: host_vars/ghostmedia.yml
+  # the media stack moved to ghostmedia 2026-11-04: host_vars/ghostmedia/
   - /home/ghost/authentik/media
   - /home/ghost/authentik/certs
   - /home/ghost/monitoring/grafana  # grafana.db (dashboards are also in git)

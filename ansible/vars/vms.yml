@@ -13,5 +13,5 @@ vms:
     storage: local-lvm
     tags: [docker, media]
     description: >-
-      Media and apps off utility (2026-11-04): Navidrome, music app, tv app, youtube-dl-server.
+      Media and apps off utility (2026-11-04): the media stack.
       Lives on homeservertoo so the media stack survives utility or homeserver going down.
