@@ -19,6 +19,9 @@
   hosts: "{{ target | default('linux') }}"
   become: true
   gather_facts: true
+  # Reload sshd/journald even if a later task fails: a written-but-unloaded SSH drop-in
+  # left Pi-hole offering passwords after a failed run (2026-11-05).
+  force_handlers: true
 
   vars:
     baseline_timezone: Australia/Sydney
