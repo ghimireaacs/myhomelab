@@ -17,7 +17,7 @@ spec:
         - name: forgejo-registry
       containers:
         - name: wiki
-          image: git.example.xyz/ashishghimire/mydocs:latest
+          image: git.example.com/ashishghimire/mydocs:latest
           resources:
             requests:
               cpu: 10m

@@ -1,5 +1,5 @@
 # Traefik v3: the homelab reverse proxy, replacing the k3s Traefik + cert-manager + MetalLB.
-# One wildcard certificate (*.example.xyz and the apex) through Cloudflare DNS-01.
+# One wildcard certificate (*.example.com and the apex) through Cloudflare DNS-01.
 # Routes to other hosts live in dynamic/routes.yml; containers on this VM can use labels.
 #
 # After editing dynamic/*.yml run `docker restart traefik`: this folder is on NFS, where
