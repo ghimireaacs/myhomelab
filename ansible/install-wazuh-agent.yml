@@ -1,0 +1,140 @@
+---
+# Wazuh agent, pinned to the manager's version, enrolled with a password.
+#
+#   export WAZUH_ENROL_PASS='...'        # from the manager's /var/ossec/etc/authd.pass
+#   ansible-playbook install-wazuh-agent.yml -e target=utility
+#   ansible-playbook install-wazuh-agent.yml
+#
+# The password comes from the control node's environment (Semaphore: a Variable),
+# never from this repo. Agent groups (BareMetals, VMs) must already exist on the manager.
+- name: Install Wazuh agent
+  hosts: "{{ target | default('linux') }}"
+  become: true
+
+  vars:
+    wazuh_manager: wazuh.lan             # Unbound host override -> 10.10.60.118
+    # Addresses of the current manager. An agent pointing at any of these is kept and
+    # repointed in place; anything else (e.g. old 10.10.10.118) is purged and re-enrolled.
+    wazuh_manager_known: [wazuh.lan, 10.10.60.118]
+    wazuh_version: 4.14.9-1              # never newer than the manager
+    wazuh_enrol_pass: "{{ lookup('env', 'WAZUH_ENROL_PASS') }}"
+    # Groups that exist on the manager. kuber is a MacBook; everything else here is a guest.
+    wazuh_group: "{{ 'BareMetals' if 'k3s_master' in group_names else 'VMs' }}"
+
+  tasks:
+    - name: Require the enrolment password
+      assert:
+        that: wazuh_enrol_pass | length > 0
+        fail_msg: "Set WAZUH_ENROL_PASS in the environment first."
+      run_once: true
+      delegate_to: localhost
+      become: false
+
+    - name: Read existing agent config
+      slurp:
+        path: /var/ossec/etc/ossec.conf
+      register: existing_conf
+      failed_when: false
+
+    # An agent left over from the old manager (10.10.10.118) keeps stale client.keys,
+    # and a half-configured package leaves no wazuh group. Start clean in both cases.
+    - name: Remove agent that points elsewhere
+      when:
+        - existing_conf.content is defined
+        - wazuh_manager_known
+          | map('regex_replace', '^(.*)$', '<address>\\1</address>')
+          | select('in', existing_conf.content | b64decode)
+          | list | length == 0
+      block:
+        - name: Stop old agent
+          systemd:
+            name: wazuh-agent
+            state: stopped
+          failed_when: false
+
+        - name: Purge old agent
+          apt:
+            name: wazuh-agent
+            state: absent
+            purge: yes
+
+        - name: Delete old agent directory
+          file:
+            path: /var/ossec
+            state: absent
+
+    - name: Install prerequisites
+      apt:
+        name: [lsb-release, gnupg, curl, ca-certificates]
+        update_cache: yes
+
+    - name: Add Wazuh GPG key
+      shell: |
+        curl -fsSL https://packages.wazuh.com/key/GPG-KEY-WAZUH \
+          | gpg --dearmor -o /usr/share/keyrings/wazuh.gpg
+        chmod 0644 /usr/share/keyrings/wazuh.gpg
+      args:
+        creates: /usr/share/keyrings/wazuh.gpg
+
+    - name: Add Wazuh apt repository
+      copy:
+        dest: /etc/apt/sources.list.d/wazuh.list
+        content: "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main\n"
+        mode: "0644"
+
+    # update.yml runs dist-upgrade everywhere; this stops it moving the agent past the manager.
+    - name: Pin agent version
+      copy:
+        dest: /etc/apt/preferences.d/wazuh-agent
+        content: |
+          Package: wazuh-agent
+          Pin: version {{ wazuh_version }}
+          Pin-Priority: 1001
+        mode: "0644"
+
+    # The package's postinst reads these variables and writes ossec.conf and authd.pass.
+    - name: Install agent
+      apt:
+        name: "wazuh-agent={{ wazuh_version }}"
+        update_cache: yes
+      environment:
+        WAZUH_MANAGER: "{{ wazuh_manager }}"
+        WAZUH_AGENT_NAME: "{{ inventory_hostname }}"
+        WAZUH_AGENT_GROUP: "{{ wazuh_group }}"
+        WAZUH_REGISTRATION_PASSWORD: "{{ wazuh_enrol_pass }}"
+      no_log: true
+
+    - name: Point agent at the manager name
+      replace:
+        path: /var/ossec/etc/ossec.conf
+        regexp: '<address>[^<]*</address>'
+        replace: '<address>{{ wazuh_manager }}</address>'
+      register: addr_conf
+
+    # The package only applies WAZUH_AGENT_GROUP on first install; keep it right on reruns.
+    - name: Set enrolment group
+      replace:
+        path: /var/ossec/etc/ossec.conf
+        # Only inside <enrollment>; syscollector has its own <groups> switch.
+        regexp: '(<enrollment>(?:(?!</enrollment>)[\s\S])*?<groups>)[^<]*(</groups>)'
+        replace: '\g<1>{{ wazuh_group }}\g<2>'
+      register: group_conf
+
+    - name: Start agent
+      systemd:
+        name: wazuh-agent
+        state: "{{ 'restarted' if (group_conf.changed or addr_conf.changed) else 'started' }}"
+        enabled: yes
+        daemon_reload: yes
+
+    - name: Wait for enrolment
+      wait_for:
+        path: /var/ossec/etc/client.keys
+        search_regex: "{{ inventory_hostname }}"
+        timeout: 60
+
+    # Enrolment is done; the key file is what authenticates from now on.
+    - name: Remove enrolment password from the host
+      file:
+        path: /var/ossec/etc/authd.pass
+        state: absent
