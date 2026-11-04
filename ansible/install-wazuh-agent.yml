@@ -29,8 +29,9 @@
           # catches a sudo prompt captured along with the password (ssh -t ... sudo cat)
           - "'sudo' not in wazuh_enrol_pass and wazuh_enrol_pass is not search('\\s')"
         fail_msg: >-
-          WAZUH_ENROL_PASS is empty or looks wrong (contains 'sudo' or whitespace). Read it with:
-          read -rs -p 'Wazuh enrolment password: ' WAZUH_ENROL_PASS; echo; export WAZUH_ENROL_PASS
+          WAZUH_ENROL_PASS is empty or looks wrong (contains 'sudo' or whitespace). Read it hidden with
+          zsh: read -rs '?Wazuh enrolment password: ' WAZUH_ENROL_PASS; export WAZUH_ENROL_PASS
+          bash: read -rsp 'Wazuh enrolment password: ' WAZUH_ENROL_PASS; export WAZUH_ENROL_PASS
       run_once: true
       delegate_to: localhost
       become: false
