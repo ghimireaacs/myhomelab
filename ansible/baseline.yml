@@ -98,6 +98,9 @@
       notify: Reload sshd
 
     # ---------- logs ----------
+    - name: Journal drop-in folder (absent on minimal images and LXCs)
+      ansible.builtin.file: {path: /etc/systemd/journald.conf.d, state: directory, mode: "0755"}
+
     - name: Cap the journal
       ansible.builtin.copy:
         dest: /etc/systemd/journald.conf.d/10-baseline.conf
