@@ -31,17 +31,17 @@ data:
                   - title: Homelab
                     links:
                       - title: Homepage
-                        url: https://home.example.xyz
+                        url: https://home.example.com
                       - title: Grafana
-                        url: https://grafana.example.xyz
+                        url: https://grafana.example.com
                       - title: Portainer
-                        url: https://portainer.example.xyz
+                        url: https://portainer.example.com
                       - title: Semaphore
-                        url: https://ansible.example.xyz
+                        url: https://ansible.example.com
                       - title: ntfy
-                        url: https://ntfy.example.xyz
+                        url: https://ntfy.example.com
                       - title: Proxmox
-                        url: https://proxmox.example.xyz
+                        url: https://proxmox.example.com
                   - title: Blog & Docs
                     links:
                       - title: Blog

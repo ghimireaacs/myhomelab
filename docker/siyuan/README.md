@@ -2,7 +2,7 @@
 
 Trial on the **utility VM** (`10.10.10.114`), running alongside the existing wiki.
 Nothing about the current wiki changes. `mydocs/wiki/` in git stays the source
-of truth, and Quartz keeps publishing `wiki.example.xyz` as before.
+of truth, and Quartz keeps publishing `wiki.example.com` as before.
 
 SiYuan stores notes as its own `.sy` JSON, not `.md` files, so it can't edit
 the wiki files in place. `sync-wiki.py` mirrors them one way into a notebook

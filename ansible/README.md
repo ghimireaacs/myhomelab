@@ -18,7 +18,7 @@ WAZUH_ENROL_PASS='...' ./run.sh install-wazuh-agent.yml -e target=nextcloud
 
 `ANSIBLE_CONFIG` must be set when running Ansible any other way: this folder is on NFS
 and world-writable, and Ansible ignores `ansible.cfg` in a world-writable directory.
-Semaphore (`ansible.example.xyz`) can also run these from the GitHub copy of the repo.
+Semaphore (`ansible.example.com`) can also run these from the GitHub copy of the repo.
 
 ## Inventory
 
