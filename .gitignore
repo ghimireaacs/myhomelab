@@ -27,8 +27,8 @@ terraform/ssh/*.pem
 terraform/ssh/bootstrap
 terraform/ssh/id_*
 
-# Docs live in a separate repository
-docs/
+# The old wiki lived in a separate repository; docs/ now holds the guide
+docs/wiki/
 
 # Claude Code local settings
 .claude/
