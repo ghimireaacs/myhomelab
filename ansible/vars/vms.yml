@@ -1,0 +1,17 @@
+---
+# VMs created by proxmox-vm.yml. Convention: VMID = last octet of the IP.
+# template: docker-template on that node (homeserver 168, homeservertoo 268).
+vms:
+  ghostmedia:
+    vmid: 115
+    node: homeservertoo
+    template: 268
+    ip: 10.10.10.115
+    cores: 4
+    memory: 6144        # MB
+    disk: 64G
+    storage: local-lvm
+    tags: [docker, media]
+    description: >-
+      Media and apps off utility (2026-11-04): Navidrome, music app, tv app, youtube-dl-server.
+      Lives on homeservertoo so the media stack survives utility or homeserver going down.

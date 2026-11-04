@@ -24,7 +24,7 @@ Semaphore (`ansible.example.xyz`) can also run these from the GitHub copy of the
 
 | Group | Hosts |
 |---|---|
-| `docker_vms` | ghostgpu, nextcloud, utility |
+| `docker_vms` | ghostgpu, nextcloud, utility, ghostmedia |
 | `proxmox` | homeserver, homeservertoo |
 | `lxc` | pihole (root login, no Docker) |
 | `workstation` | jarvis (local connection) |
@@ -42,6 +42,8 @@ anything against that host.
 |---|---|
 | `baseline.yml` | What every host should have (below). Safe to re-run; dry-run with `--check --diff` |
 | `bootstrap.yml` | Blank VM → packages, NFS mount, Docker, agent containers; then run `baseline.yml` |
+| `proxmox-template.yml` | Build or rebuild `docker-template` on a node from the Ubuntu 26.04 cloud image, with the baseline and agents baked in (homeserver 168, homeservertoo 268) |
+| `proxmox-vm.yml` | Create a VM from `vars/vms.yml`: full clone of the node's template, keys from github.com/ghimireaacs + Jarvis |
 | `install-wazuh-agent.yml` | Wazuh agent pinned to the manager's version; needs `WAZUH_ENROL_PASS` |
 | `backup.yml` | Dump local-disk state to TrueNAS — the only guard against permanent loss |
 | `deploy.yml` | Bring up application stacks from the repo |
@@ -86,3 +88,21 @@ that host's `host_vars` file.** Nothing else backs it up. As of 2026-11-02 the r
   one missing its `.env`, is reported and skipped.
 - `backup.yml` refuses to write if the NFS mount is absent, rather than filling
   a local disk with backups that would die with the host.
+
+## New VMs (since 2026-11-04)
+
+```bash
+# once per node, or to refresh the image (replaces the old template of the same name)
+./run.sh proxmox-template.yml -e node=homeservertoo -e template_id=268 -e template_replace=true
+./run.sh proxmox-template.yml -e node=homeserver -e template_id=168 \
+    -e template_storage=wdstorageHDD -e template_replace=true
+
+# declare the VM in vars/vms.yml (VMID = last octet of the IP), then
+./run.sh proxmox-vm.yml -e vm=<name>
+# add it to inventory.ini [docker_vms] and host_vars/<name>.yml (backup_paths), then
+./run.sh baseline.yml --limit <name>
+```
+
+The template build boots on 10.10.10.198 for a few minutes. CPU type is `x86-64-v2-AES`
+so a VM runs on either node (the HP's i7-3770 has no AVX2). No password is set for
+`ghost`: login is by key only, including on the Proxmox console.
