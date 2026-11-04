@@ -189,16 +189,6 @@ data:
             description: Indexer manager
             icon: di-prowlarr
             ping: https://prowlarr.${BASE_DOMAIN}
-        - movie app:
-            href: https://movie app.${BASE_DOMAIN}
-            description: Movies
-            icon: di-movie app
-            ping: https://movie app.${BASE_DOMAIN}
-        - tv app:
-            href: https://tv app.${BASE_DOMAIN}
-            description: TV shows
-            icon: di-tv app
-            ping: https://tv app.${BASE_DOMAIN}
         - LazyLibrarian:
             href: https://lazylibrarian.${BASE_DOMAIN}
             description: Books & audiobooks

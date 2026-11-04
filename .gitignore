@@ -47,3 +47,9 @@ docker/job-fetcher/CHANGELOG.md
 
 # Rendered from prometheus.yml.tmpl with real targets
 docker/monitoring/prometheus/prometheus.yml
+
+# Private, per-host additions (never committed)
+docker-compose.override.yaml
+docker/_private/
+docker/traefik/dynamic/private*.yml
+ansible/host_vars/*/private.yml

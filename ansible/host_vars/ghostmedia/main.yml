@@ -1,0 +1,9 @@
+---
+# ghostmedia (VM 115, homeservertoo), created 2026-11-04 from docker-template 268.
+# Media stack moved here from utility on 2026-11-04 so it no longer shares utility's fate.
+# Libraries are on the NAS; app state paths and the SQLite pause list are in private.yml
+# (gitignored) beside this file.
+
+docker_daemon_extra:
+  dns: ["10.10.10.1", "1.1.1.1"]
+  dns-opts: ["ndots:0"]
