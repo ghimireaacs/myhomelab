@@ -29,6 +29,22 @@ backup_paths:
   - /home/ghost/monitoring/graphite # TrueNAS history
   - /home/ghost/forgejo             # retired 2026-11-02; kept until the final archive is confirmed
 
+# Paused for the seconds their folders are archived (SQLite written live; a copy taken
+# mid-write can be inconsistent). backup.yml always unpauses them afterwards.
+backup_pause_containers:
+  - glance
+  - wallos
+  - actual-budget
+  - karakeep
+  - paperless
+  - vikunja
+  - yamtrack
+  - navidrome
+  - music app
+  - tv app
+  - grafana
+  - graphite
+
 # Merged into docker_daemon_base by baseline.yml
 docker_daemon_extra:
   dns: ["10.10.10.1", "1.1.1.1"]

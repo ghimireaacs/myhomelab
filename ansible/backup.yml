@@ -97,22 +97,41 @@
 
     # ---------- local paths ----------
 
-    - name: Archive local directories
-      ansible.builtin.shell:
-        cmd: >-
-          set -o pipefail;
-          tar czf
-          {{ backup_root }}/{{ inventory_hostname }}/paths/{{ item | regex_replace('^/home/ghost/', '') | replace('/', '_') }}-{{ ansible_date_time.date }}.tar.gz
-          -C {{ item | dirname }} {{ item | basename }}
-        executable: /bin/bash
-      # Named by the path (karakeep_web, paperless_data): two folders that share a
-      # basename such as "data" or "web" no longer overwrite each other.
-      loop: "{{ backup_paths | default([]) }}"
-      become: true
-      register: path_backup
-      failed_when: path_backup.rc != 0
-      ignore_errors: true
-      changed_when: path_backup.rc == 0
+    # SQLite apps write while tar reads ("file changed as we read it"), which can leave
+    # an inconsistent copy. Pause them for the few seconds of archiving; the always:
+    # section unpauses them even if an archive fails.
+    - name: Archive local directories (SQLite writers paused)
+      block:
+        - name: Pause containers that keep SQLite in backup_paths
+          ansible.builtin.command: "docker pause {{ item }}"
+          loop: "{{ backup_pause_containers | default([]) }}"
+          register: paused
+          failed_when: false
+          changed_when: paused.rc == 0
+
+        - name: Archive local directories
+          ansible.builtin.shell:
+            cmd: >-
+              set -o pipefail;
+              tar czf
+              {{ backup_root }}/{{ inventory_hostname }}/paths/{{ item | regex_replace('^/home/ghost/', '') | replace('/', '_') }}-{{ ansible_date_time.date }}.tar.gz
+              -C {{ item | dirname }} {{ item | basename }}
+            executable: /bin/bash
+          # Named by the path (karakeep_web, paperless_data): two folders that share a
+          # basename such as "data" or "web" no longer overwrite each other.
+          loop: "{{ backup_paths | default([]) }}"
+          become: true
+          register: path_backup
+          failed_when: path_backup.rc != 0
+          ignore_errors: true
+          changed_when: path_backup.rc == 0
+      always:
+        - name: Unpause the SQLite containers
+          ansible.builtin.command: "docker unpause {{ item }}"
+          loop: "{{ backup_pause_containers | default([]) }}"
+          register: unpaused
+          failed_when: false
+          changed_when: unpaused.rc == 0
 
     # ---------- retention ----------
 
