@@ -49,6 +49,7 @@ services:
       - UTILITY_IP=${UTILITY_IP:?set UTILITY_IP in .env}
       - GHOSTGPU_IP=${GHOSTGPU_IP:?set GHOSTGPU_IP in .env}
       - GHOSTMEDIA_IP=${GHOSTMEDIA_IP:?set GHOSTMEDIA_IP in .env}
+      - JARVIS_IP=${JARVIS_IP:?set JARVIS_IP in .env}
       - HOMEASSISTANT_IP=${HOMEASSISTANT_IP:?set HOMEASSISTANT_IP in .env}
       - NEXTCLOUD_IP=${NEXTCLOUD_IP:?set NEXTCLOUD_IP in .env}
       - PIHOLE_IP=${PIHOLE_IP:?set PIHOLE_IP in .env}

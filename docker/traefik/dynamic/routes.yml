@@ -17,6 +17,7 @@ unknown hosts now get Traefik's 404.
 {{- $utility := env "UTILITY_IP" -}}
 {{- $gpu := env "GHOSTGPU_IP" -}}
 {{- $media := env "GHOSTMEDIA_IP" -}}
+{{- $jarvis := env "JARVIS_IP" -}}
 http:
   routers:
     glance:
@@ -134,6 +135,10 @@ http:
       rule: "Host(`syncthing.{{ $d }}`)"
       service: syncthing
       middlewares: [lan-only]
+    pnpt:
+      rule: "Host(`pnpt.{{ $d }}`)"
+      service: pnpt
+      middlewares: [lan-only]
     traefik-dashboard:
       rule: "Host(`traefik.{{ $d }}`)"
       service: api@internal
@@ -214,6 +219,9 @@ http:
       loadBalancer: {servers: [{url: "http://{{ env "TRUENAS_IP" }}:30329"}]}
     healthchecks:
       loadBalancer: {servers: [{url: "http://{{ $media }}:8020"}]}
+    pnpt:
+      # PNPT study notebook (static nginx on Jarvis)
+      loadBalancer: {servers: [{url: "http://{{ $jarvis }}:8071"}]}
     syncthing:
       # Syncthing's GUI rejects unknown Host headers (DNS-rebinding guard): send the IP instead
       loadBalancer:
