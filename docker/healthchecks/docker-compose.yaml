@@ -1,0 +1,31 @@
+# Healthchecks: dead-man's switch for scheduled jobs (2026-11-05). Each job pings it when it
+# succeeds; a ping that doesn't arrive in time raises an alert. Runs on ghostmedia (the HP side)
+# so it keeps watching when utility is down. Jobs ping it directly on this host's IP:8020, not
+# through Traefik, so a proxy outage can't make healthy jobs look missed.
+#   cp .env.example .env && docker compose up -d
+#   docker compose exec healthchecks /opt/healthchecks/manage.py createsuperuser
+name: healthchecks
+
+services:
+  healthchecks:
+    image: healthchecks/healthchecks:v5.0.3
+    container_name: healthchecks
+    restart: unless-stopped
+    ports:
+      - "8020:8000"
+    environment:
+      - DB=sqlite
+      - DB_NAME=/data/hc.sqlite
+      - SECRET_KEY=${HC_SECRET_KEY:?set HC_SECRET_KEY in .env}
+      - SITE_ROOT=${HC_SITE_ROOT:?set HC_SITE_ROOT in .env}
+      - SITE_NAME=Homelab checks
+      - ALLOWED_HOSTS=*
+      - REGISTRATION_OPEN=False
+      - DEBUG=False
+      - TZ=Australia/Sydney
+    volumes:
+      - ${HC_DATA_PATH:?set HC_DATA_PATH in .env}:/data
+    deploy:
+      resources:
+        limits:
+          memory: 384M

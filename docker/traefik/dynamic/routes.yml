@@ -126,6 +126,10 @@ http:
       rule: "Host(`backrest.{{ $d }}`)"
       service: backrest
       middlewares: [lan-only]
+    healthchecks:
+      rule: "Host(`hc.{{ $d }}`)"
+      service: healthchecks
+      middlewares: [lan-only]
     traefik-dashboard:
       rule: "Host(`traefik.{{ $d }}`)"
       service: api@internal
@@ -204,6 +208,8 @@ http:
         serversTransport: self-signed
     backrest:
       loadBalancer: {servers: [{url: "http://{{ env "TRUENAS_IP" }}:30329"}]}
+    healthchecks:
+      loadBalancer: {servers: [{url: "http://{{ $media }}:8020"}]}
 
   serversTransports:
     # Proxmox presents a self-signed certificate.
