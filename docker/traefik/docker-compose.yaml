@@ -54,6 +54,7 @@ services:
       - PIHOLE_IP=${PIHOLE_IP:?set PIHOLE_IP in .env}
       - TRUENAS_IP=${TRUENAS_IP:?set TRUENAS_IP in .env}
       - PROXMOX_IP=${PROXMOX_IP:?set PROXMOX_IP in .env}
+      - PBS_IP=${PBS_IP:?set PBS_IP in .env}
     ports:
       - "80:80"
       - "443:443"
