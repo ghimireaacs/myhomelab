@@ -130,6 +130,10 @@ http:
       rule: "Host(`hc.{{ $d }}`)"
       service: healthchecks
       middlewares: [lan-only]
+    syncthing:
+      rule: "Host(`syncthing.{{ $d }}`)"
+      service: syncthing
+      middlewares: [lan-only]
     traefik-dashboard:
       rule: "Host(`traefik.{{ $d }}`)"
       service: api@internal
@@ -210,6 +214,11 @@ http:
       loadBalancer: {servers: [{url: "http://{{ env "TRUENAS_IP" }}:30329"}]}
     healthchecks:
       loadBalancer: {servers: [{url: "http://{{ $media }}:8020"}]}
+    syncthing:
+      # Syncthing's GUI rejects unknown Host headers (DNS-rebinding guard): send the IP instead
+      loadBalancer:
+        servers: [{url: "http://{{ $utility }}:8384"}]
+        passHostHeader: false
 
   serversTransports:
     # Proxmox presents a self-signed certificate.
