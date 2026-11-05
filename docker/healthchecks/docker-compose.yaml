@@ -22,6 +22,8 @@ services:
       - ALLOWED_HOSTS=*
       - REGISTRATION_OPEN=False
       - DEBUG=False
+      # Alerts go to ntfy on a LAN address; Healthchecks blocks private IPs unless told otherwise
+      - INTEGRATIONS_ALLOW_PRIVATE_IPS=True
       - TZ=Australia/Sydney
     volumes:
       - ${HC_DATA_PATH:?set HC_DATA_PATH in .env}:/data
