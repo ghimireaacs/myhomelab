@@ -1,0 +1,31 @@
+# The static notebooks (ghostbots): each one is a folder of built HTML on the NAS,
+# rebuilt with its own ./build.sh. Read-only mounts; nginx only serves them.
+#   cp .env.example .env && docker compose up -d
+name: notebooks
+
+x-site: &site
+  image: nginx:1.29-alpine
+  restart: unless-stopped
+  mem_limit: 64m
+
+services:
+  lab-notebook:
+    <<: *site
+    container_name: lab-notebook
+    ports: ["8070:80"]
+    volumes:
+      - ${LAB_NOTEBOOK_SITE:?set LAB_NOTEBOOK_SITE in .env}:/usr/share/nginx/html:ro
+
+  pnpt-notebook:
+    <<: *site
+    container_name: pnpt-notebook
+    ports: ["8071:80"]
+    volumes:
+      - ${PNPT_NOTEBOOK_SITE:?set PNPT_NOTEBOOK_SITE in .env}:/usr/share/nginx/html:ro
+
+  photo-notebook:
+    <<: *site
+    container_name: photo-notebook
+    ports: ["8072:80"]
+    volumes:
+      - ${PHOTO_NOTEBOOK_SITE:?set PHOTO_NOTEBOOK_SITE in .env}:/usr/share/nginx/html:ro

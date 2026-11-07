@@ -18,6 +18,7 @@ unknown hosts now get Traefik's 404.
 {{- $gpu := env "GHOSTGPU_IP" -}}
 {{- $media := env "GHOSTMEDIA_IP" -}}
 {{- $jarvis := env "JARVIS_IP" -}}
+{{- $bots := env "GHOSTBOTS_IP" -}}
 http:
   routers:
     glance:
@@ -139,6 +140,14 @@ http:
       rule: "Host(`pnpt.{{ $d }}`)"
       service: pnpt
       middlewares: [lan-only]
+    lab-notebook:
+      rule: "Host(`lab.{{ $d }}`)"
+      service: lab-notebook
+      middlewares: [lan-only]
+    photo-notebook:
+      rule: "Host(`photo.{{ $d }}`)"
+      service: photo-notebook
+      middlewares: [lan-only]
     traefik-dashboard:
       rule: "Host(`traefik.{{ $d }}`)"
       service: api@internal
@@ -150,7 +159,7 @@ http:
     dozzle:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:8383"}]}
     infra:
-      loadBalancer: {servers: [{url: "http://{{ $utility }}:1313"}]}
+      loadBalancer: {servers: [{url: "http://{{ $bots }}:1313"}]}
     mattermost:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:8065"}]}
     ntfy:
@@ -158,9 +167,9 @@ http:
     radicale:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:5232"}]}
     shuttle:
-      loadBalancer: {servers: [{url: "http://{{ $utility }}:5000"}]}
+      loadBalancer: {servers: [{url: "http://{{ $bots }}:5000"}]}
     ytnotify:
-      loadBalancer: {servers: [{url: "http://{{ $utility }}:8767"}]}
+      loadBalancer: {servers: [{url: "http://{{ $bots }}:8767"}]}
     wallos:
       loadBalancer: {servers: [{url: "http://{{ $utility }}:8092"}]}
     actual-budget:
@@ -219,9 +228,13 @@ http:
       loadBalancer: {servers: [{url: "http://{{ env "TRUENAS_IP" }}:30329"}]}
     healthchecks:
       loadBalancer: {servers: [{url: "http://{{ $media }}:8020"}]}
+    # The notebooks: static nginx on ghostbots (docker/notebooks)
     pnpt:
-      # PNPT study notebook (static nginx on Jarvis)
-      loadBalancer: {servers: [{url: "http://{{ $jarvis }}:8071"}]}
+      loadBalancer: {servers: [{url: "http://{{ $bots }}:8071"}]}
+    lab-notebook:
+      loadBalancer: {servers: [{url: "http://{{ $bots }}:8070"}]}
+    photo-notebook:
+      loadBalancer: {servers: [{url: "http://{{ $bots }}:8072"}]}
     syncthing:
       # Syncthing's GUI rejects unknown Host headers (DNS-rebinding guard): send the IP instead
       loadBalancer:
