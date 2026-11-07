@@ -1,0 +1,8 @@
+---
+# ghostbots (VM 117, homeservertoo), created 2026-11-07 from docker-template 268.
+# Home-made bots and services, moved off the infrastructure VMs and Jarvis.
+# App state paths and the SQLite pause list go in private.yml (gitignored) beside this file.
+
+docker_daemon_extra:
+  dns: ["10.10.10.1", "1.1.1.1"]
+  dns-opts: ["ndots:0"]
