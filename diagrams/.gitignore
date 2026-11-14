@@ -1,1 +1,4 @@
 icons/
+# Full private maps: every app, real labels. Public maps are overview.d2 / flow.d2.
+*.full.d2
+*.full.svg
