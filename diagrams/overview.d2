@@ -1,0 +1,158 @@
+# Overview: everything that exists, grouped by where it runs. Top to bottom, outside in:
+# outside services, the network edge, the two Proxmox hosts with their guests, storage and
+# backups, the security box, the control node. No IPs here: they live in Network and Compute.
+# Render: ./render.sh (D2 v0.7.1, ELK layout) -> diagrams/overview.svg
+
+...@style.d2
+
+direction: down
+grid-columns: 1
+grid-gap: 80
+
+upper: "" {
+  grid-columns: 2
+  grid-gap: 40
+  style: {fill: transparent; stroke: transparent}
+
+  outside: Outside the house {
+    class: zone
+    grid-rows: 1
+    grid-columns: 7
+    cloudflare: "Cloudflare\nDNS, tunnel" {class: card; icon: ${di}/cloudflare.svg}
+    letsencrypt: "Let's Encrypt\ncertificates" {class: card; icon: ${di}/lets-encrypt.svg}
+    twingate: "Twingate\nremote access" {class: card; icon: ${di}/twingate-light.svg}
+    b2: "Backblaze B2\noff-site copy" {class: card; icon: ${di}/backblaze.svg}
+    github: "GitHub\nrepos, images" {class: card; icon: ${di}/github-light.svg}
+    gmail: "Gmail\nmail out" {class: card; icon: ${di}/gmail.svg}
+    discord: "Discord\nbots" {class: card; icon: ${di}/discord.svg}
+  }
+
+  edge: Network edge {
+    class: zone
+    grid-rows: 1
+    grid-columns: 6
+    modem: "Nighthawk\nmodem, Tenants Wi-Fi" {class: card; icon: ${di}/netgear-light.svg}
+    opnsense: "OPNsense\nrouter, firewall, 6 VLANs" {class: card; icon: ${di}/opnsense.svg}
+    pihole: "Pi-hole\nDNS (LXC)" {class: card; icon: ${di}/pi-hole.svg}
+    eero: "Eero\nPersonal Wi-Fi" {class: text}
+    openwrt: "OpenWrt\nIoT Wi-Fi" {class: card; icon: ${di}/openwrt.svg}
+    devices: "Phones, laptops\nand the desktop" {class: text}
+  }
+}
+
+compute: "Compute · Proxmox cluster ghostcluster" {
+  class: zone
+  grid-columns: 2
+  grid-gap: 40
+
+  homeserver: "homeserver · Ryzen 5 3600, 32 GB, GTX 1660 Super · Proxmox" {
+    class: host
+    grid-columns: 2
+
+    utility: "utility · the front door and everyday apps" {
+      class: vm
+      grid-rows: 4
+      grid-columns: 6
+      traefik: "Traefik\nreverse proxy" {class: card; icon: ${di}/traefik.svg}
+      authentik: "Authentik\nsign-in" {class: card; icon: ${di}/authentik.svg}
+      glance: "Glance\nstart page" {class: card; icon: ${di}/glance.svg}
+      paperless: "Paperless\ndocuments" {class: card; icon: ${di}/paperless-ngx.svg}
+      actual: "Actual\nbudget" {class: card; icon: ${di}/actual-budget.svg}
+      wallos: "Wallos\nbills" {class: card; icon: ${dp}/wallos.png}
+      karakeep: "Karakeep\nbookmarks" {class: card; icon: ${di}/karakeep.svg}
+      vikunja: "Vikunja\ntasks" {class: card; icon: ${di}/vikunja.svg}
+      yamtrack: "Yamtrack\nwatch log" {class: card; icon: ${di}/yamtrack-light.svg}
+      mattermost: "Mattermost\nfamily chat" {class: card; icon: ${di}/mattermost.svg}
+      radicale: "Radicale\ncalendars" {class: card; icon: ${di}/radicale.svg}
+      syncthing: "Syncthing\nObsidian vaults" {class: card; icon: ${di}/syncthing.svg}
+      grafana: "Grafana\ndashboards" {class: card; icon: ${di}/grafana.svg}
+      prometheus: "Prometheus\nmetrics" {class: card; icon: ${di}/prometheus.svg}
+      loki: "Loki\nlog history" {class: card; icon: ${di}/loki.svg}
+      ntfy: "ntfy\npush alerts" {class: card; icon: ${di}/ntfy.svg}
+      semaphore: "Semaphore\nAnsible UI" {class: card; icon: ${di}/semaphore.svg}
+      dozzle: "Dozzle\nlive logs" {class: card; icon: ${di}/dozzle.svg}
+      twingateconn: "Twingate\nconnector" {class: card; icon: ${di}/twingate-light.svg}
+      smtp: "Mail relay\nPostfix" {class: card; icon: ${di}/postfix.svg}
+      siyuan: "SiYuan\ntrial" {class: aside; icon: ${di}/siyuan.svg}
+    }
+
+    ghostgpu: "ghostgpu · GPU passthrough" {
+      class: vm
+      grid-rows: 2
+      grid-columns: 3
+      ollama: "Ollama\nlocal models" {class: card; icon: ${di}/ollama.svg}
+      openwebui: "Open WebUI\nchat" {class: card; icon: ${di}/open-webui.svg}
+      immich: "Immich\nphotos" {class: card; icon: ${di}/immich.svg}
+      n8n: "n8n\nautomation, public" {class: card; icon: ${di}/n8n.svg}
+      tunnel: "cloudflared\nthe one public path" {class: card; icon: ${di}/cloudflare.svg}
+    }
+
+    nextcloud: "nextcloud" {
+      class: vm
+      nc: "Nextcloud\nfiles" {class: card; icon: ${di}/nextcloud.svg}
+    }
+
+    homeassistant: "homeassistant · HAOS" {
+      class: vm
+      ha: "Home Assistant\nthe house" {class: card; icon: ${di}/home-assistant.svg}
+    }
+  }
+
+  homeservertoo: "homeservertoo · i7-3770, 24 GB · Proxmox" {
+    class: host
+    grid-columns: 2
+
+    ghostmedia: "ghostmedia · heartbeats" {
+      class: vm
+      healthchecks: "Healthchecks\ndead-man switch" {class: card; icon: ${di}/healthchecks.svg}
+    }
+
+    ghostbots: "ghostbots · sites, notebooks, bots" {
+      class: vm
+      grid-rows: 3
+      grid-columns: 3
+      caddy: "Caddy\nstudy domain" {class: card; icon: ${di}/caddy.svg}
+      notebook: "Lab Notebook\nprivate docs" {class: card; icon: ${di}/nginx.svg}
+      study: "Study notebooks\nPNPT, photo, AI" {class: card; icon: ${di}/obsidian.svg}
+      receipts: "Receipts app\nphone to Paperless" {class: text}
+      ytnotify: "yt-notify\nupload alerts" {class: card; icon: ${di}/youtube.svg}
+      whisperer: "ghost-whisperer\nDiscord bot" {class: card; icon: ${di}/discord.svg}
+      infra: "infra site\nhardware" {class: card; icon: ${di}/hugo.svg}
+    }
+
+  }
+}
+
+lower: "" {
+  grid-columns: 3
+  grid-gap: 40
+  style: {fill: transparent; stroke: transparent}
+
+  storage: Storage and backups {
+    class: zone
+    grid-columns: 4
+    truenas: "TrueNAS\n2 × 12 TB ZFS mirror, NFS" {class: card; icon: ${di}/truenas-scale.svg}
+    pbs: "Backup Server\nnightly, encrypted" {class: card; icon: ${di}/proxmox-backup-server.svg}
+    backrest: "Backrest\nrestic to B2" {class: card; icon: ${di}/backrest-dark.svg}
+    qdevice: "QDevice\nthird cluster vote" {class: card; icon: ${di}/proxmox.svg}
+  }
+
+  security: "Security VLAN · defence box" {
+    class: zone
+    grid-columns: 2
+    proxmox3: "proxmox3\nstandalone Proxmox" {class: card; icon: ${di}/proxmox.svg}
+    wazuh: "Wazuh\nSIEM, router logs" {class: card; icon: ${di}/wazuh.svg}
+  }
+
+  control: Control node {
+    class: zone
+    grid-columns: 2
+    jarvis: "Jarvis\nAnsible, Claude, builds" {class: card; icon: ${di}/ansible.svg}
+    docker: "Docker\nlocal bots" {class: card; icon: ${di}/docker.svg}
+  }
+}
+
+# One line per relationship between groups; detail lives in flow.d2.
+upper.outside -> upper.edge: "WAN" {class: req}
+upper.edge -> compute: "server VLAN" {class: req}
+compute -> lower.storage: "NFS, backups" {class: data}

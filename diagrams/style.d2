@@ -1,0 +1,115 @@
+# Shared look for the lab maps (imported by overview.d2 and flow.d2).
+# Colours are the Lab Notebook's dark tokens: Ink background, Serenity
+# accent, Turquoise for storage, Greenery for backups, Very Peri for security, Rose Quartz
+# for alerts. Icons: homarr-labs/dashboard-icons, cached in icons/ by render.sh and bundled
+# into the SVG.
+
+vars: {
+  # Local copies of homarr-labs/dashboard-icons, fetched by render.sh
+  di: icons
+  dp: icons
+}
+
+style: {
+  fill: "#121419"
+}
+
+classes: {
+  zone: {
+    style: {
+      fill: "#15181e"
+      stroke: "#2c323c"
+      stroke-width: 2
+      border-radius: 10
+      font-color: "#a3a9b4"
+      font-size: 22
+      bold: true
+    }
+  }
+  host: {
+    style: {
+      fill: "#191c23"
+      stroke: "#333a46"
+      stroke-width: 2
+      border-radius: 10
+      font-color: "#c9cdd4"
+      font-size: 18
+      bold: true
+    }
+  }
+  vm: {
+    style: {
+      fill: "#1d2129"
+      stroke: "#3a4250"
+      stroke-width: 1
+      border-radius: 8
+      font-color: "#a3a9b4"
+      font-size: 15
+      bold: true
+    }
+  }
+  card: {
+    width: 150
+    height: 118
+    label.near: bottom-center
+    icon.near: top-center
+    style: {
+      fill: "#222731"
+      stroke: "#3a4250"
+      stroke-width: 1
+      border-radius: 8
+      font-color: "#e6e8ec"
+      font-size: 13
+      bold: true
+    }
+  }
+  text: {
+    width: 150
+    height: 64
+    style: {
+      fill: "#222731"
+      stroke: "#3a4250"
+      stroke-width: 1
+      border-radius: 8
+      font-color: "#e6e8ec"
+      font-size: 13
+      bold: true
+    }
+  }
+  # Off the main path: planned, trial or not part of the lab
+  aside: {
+    width: 150
+    height: 118
+    label.near: bottom-center
+    icon.near: top-center
+    style: {
+      fill: "#1b1e24"
+      stroke: "#8a919d"
+      stroke-dash: 4
+      border-radius: 8
+      font-color: "#a3a9b4"
+      font-size: 13
+      bold: true
+    }
+  }
+
+  # Edge kinds
+  req: {
+    style: {stroke: "#92A8D1"; stroke-width: 3; font-color: "#c3d0e8"; font-size: 14}
+  }
+  data: {
+    style: {stroke: "#45B5AA"; stroke-width: 3; font-color: "#7fd3ca"; font-size: 14}
+  }
+  backup: {
+    style: {stroke: "#88B04B"; stroke-width: 3; font-color: "#b3d384"; font-size: 14}
+  }
+  watch: {
+    style: {stroke: "#F7CAC9"; stroke-width: 2; stroke-dash: 5; font-color: "#F7CAC9"; font-size: 14}
+  }
+  sec: {
+    style: {stroke: "#8f90d6"; stroke-width: 2; stroke-dash: 5; font-color: "#b4b5ea"; font-size: 14}
+  }
+  ops: {
+    style: {stroke: "#8a919d"; stroke-width: 2; stroke-dash: 3; font-color: "#a3a9b4"; font-size: 14}
+  }
+}

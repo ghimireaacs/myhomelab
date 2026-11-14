@@ -1,0 +1,115 @@
+# Network and service flow: how a request, a file, a backup and an alert move through the lab.
+# Lines point down where they can (outside in); a flow that goes back up is written
+# `upper <- lower`, so the layout keeps its layers. Colours = edge kinds in style.d2:
+# blue request, turquoise data, green backup, rose alert/metrics, violet security, grey ops.
+# Render: ./render.sh -> diagrams/flow.svg
+
+...@style.d2
+
+direction: down
+
+people: People {
+  class: zone
+  phone: "Phones\nPersonal Wi-Fi or away" {class: card; icon: ${di}/google-home.svg}
+  desktop: "Desktop\nPC VLAN" {class: card; icon: ${di}/linux.svg}
+  public: "The internet\nn8n webhooks only" {class: text}
+}
+
+outside: Outside {
+  class: zone
+  cloudflare: "Cloudflare\nDNS, tunnel" {class: card; icon: ${di}/cloudflare.svg}
+  twingate: "Twingate\nremote access" {class: card; icon: ${di}/twingate-light.svg}
+  letsencrypt: "Let's Encrypt\ncertificates" {class: card; icon: ${di}/lets-encrypt.svg}
+}
+
+edge: Network edge {
+  class: zone
+  opnsense: "OPNsense\nVLAN rules, no port forwards" {class: card; icon: ${di}/opnsense.svg}
+  pihole: "Pi-hole\nanswers the lab domain" {class: card; icon: ${di}/pi-hole.svg}
+}
+
+ingress: Front doors {
+  class: zone
+  traefik: "Traefik\nlab domain, utility" {class: card; icon: ${di}/traefik.svg}
+  authentik: "Authentik\nOIDC, forward-auth" {class: card; icon: ${di}/authentik.svg}
+  caddy: "Caddy\nstudy domain, ghostbots" {class: card; icon: ${di}/caddy.svg}
+  cloudflared: "cloudflared\non ghostgpu" {class: card; icon: ${di}/cloudflare.svg}
+  twingatec: "Twingate connector\non utility" {class: card; icon: ${di}/twingate-light.svg}
+}
+
+apps: Services {
+  class: zone
+  everyday: "Everyday apps\nPaperless, Actual, Wallos…" {class: card; icon: ${di}/paperless-ngx.svg}
+  photos: "Immich\nphotos" {class: card; icon: ${di}/immich.svg}
+  nextcloud: "Nextcloud\nfiles" {class: card; icon: ${di}/nextcloud.svg}
+  ai: "Ollama, Open WebUI\nlocal models" {class: card; icon: ${di}/ollama.svg}
+  n8n: "n8n\nthe one public app" {class: card; icon: ${di}/n8n.svg}
+  ha: "Home Assistant\nthe house" {class: card; icon: ${di}/home-assistant.svg}
+  notebooks: "Notebooks\nlab and study" {class: card; icon: ${di}/obsidian.svg}
+  chat: "Mattermost\nfamily, bills, home" {class: card; icon: ${di}/mattermost.svg}
+}
+
+data: Where data lives {
+  class: zone
+  ssd: "VM SSDs\nevery database" {class: card; icon: ${di}/proxmox.svg}
+  truenas: "TrueNAS\nfiles over NFS" {class: card; icon: ${di}/truenas-scale.svg}
+}
+
+backups: Backups {
+  class: zone
+  pbs: "Backup Server\n22:00, encrypted" {class: card; icon: ${di}/proxmox-backup-server.svg}
+  dumps: "Ansible dumps\n05:30, Jarvis" {class: card; icon: ${di}/ansible.svg}
+  backrest: "Backrest\n06:00, restic" {class: card; icon: ${di}/backrest-dark.svg}
+  b2: "Backblaze B2\noff-site" {class: card; icon: ${di}/backblaze.svg}
+}
+
+watch: Watching {
+  class: zone
+  exporters: "Exporters\nnode, cAdvisor, OPNsense" {class: card; icon: ${di}/prometheus.svg}
+  grafana: "Grafana\ndashboards, alert rules" {class: card; icon: ${di}/grafana.svg}
+  healthchecks: "Healthchecks\nmissed jobs" {class: card; icon: ${di}/healthchecks.svg}
+  ntfy: "ntfy\npush to phones" {class: card; icon: ${di}/ntfy.svg}
+  glance: "Glance\nstart page, Pulse" {class: card; icon: ${di}/glance.svg}
+  wazuh: "Wazuh\nsecurity VLAN" {class: card; icon: ${di}/wazuh.svg}
+}
+
+# ── Requests ─────────────────────────────────────────────────────────────────────────
+people.phone -> edge.pihole: "DNS" {class: req}
+people.phone -> outside.twingate: "away from home" {class: req}
+people.desktop -> edge.opnsense: "HTTPS" {class: req}
+people.phone -> edge.opnsense: "HTTPS at home" {class: req}
+people.public -> outside.cloudflare: "webhooks" {class: req}
+outside.twingate -> ingress.twingatec: "tunnel" {class: req}
+outside.cloudflare -> ingress.cloudflared: "tunnel" {class: req}
+outside.letsencrypt <- ingress.traefik: "DNS-01 via Cloudflare" {class: ops}
+outside.letsencrypt <- ingress.caddy: "DNS-01" {class: ops}
+edge.opnsense -> ingress.traefik: "443 to utility" {class: req}
+edge.opnsense -> ingress.caddy: "443 to ghostbots" {class: req}
+ingress.twingatec -> ingress.traefik {class: req}
+ingress.traefik -> ingress.authentik: "who is this?" {class: sec}
+ingress.traefik -> apps: "HTTPS by host name" {class: req}
+ingress.cloudflared -> apps.n8n: "only n8n" {class: req}
+ingress.caddy -> apps.notebooks {class: req}
+
+# ── Data ─────────────────────────────────────────────────────────────────────────────
+apps -> data.ssd: "Postgres, SQLite" {class: data}
+apps -> data.truenas: "photos, documents" {class: data}
+
+# ── Backups ──────────────────────────────────────────────────────────────────────────
+data.ssd -> backups.pbs: "whole guests" {class: backup}
+data.ssd -> backups.dumps: "database dumps" {class: backup}
+backups.pbs -> data.truenas: "datastore on NFS" {class: backup}
+backups.dumps -> data.truenas {class: backup}
+data.truenas -> backups.backrest: "files + PBS chunks" {class: backup}
+backups.backrest -> backups.b2: "encrypted" {class: backup}
+
+# ── Watching ─────────────────────────────────────────────────────────────────────────
+apps -> watch.exporters: "metrics" {class: watch}
+watch.exporters -> watch.grafana: "Prometheus" {class: watch}
+watch.grafana -> watch.ntfy: "alert" {class: watch}
+backups.pbs -> watch.healthchecks: "ping" {class: watch}
+backups.backrest -> watch.healthchecks: "ping" {class: watch}
+watch.healthchecks -> watch.ntfy: "missed" {class: watch}
+watch.exporters -> watch.glance {class: watch}
+edge.opnsense -> watch.wazuh: "syslog, NetFlow" {class: sec}
+people.phone <- watch.ntfy: "push" {class: watch}
